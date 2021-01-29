@@ -16,10 +16,13 @@ module.exports = {
   devServer: {
     contentBase: dist,
   },
+  experiments: {
+    asyncWebAssembly: true,
+  },
   plugins: [
-    new CopyPlugin([
+    new CopyPlugin({ patterns: [
       path.resolve(__dirname, "static")
-    ]),
+    ]}),
 
     new WasmPackPlugin({
       crateDirectory: __dirname,
