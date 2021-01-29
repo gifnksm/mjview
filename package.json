@@ -6,7 +6,8 @@
     "build": "rimraf dist pkg && webpack",
     "start": "rimraf dist pkg && webpack serve --open --mode development",
     "test": "cargo test && wasm-pack test --headless --firefox",
-    "format": "cargo fmt && prettier -w ."
+    "format": "cargo fmt && prettier -w .",
+    "clean": "rimraf dist pkg target"
   },
   "devDependencies": {
     "@wasm-tool/wasm-pack-plugin": "^1.3.1",
