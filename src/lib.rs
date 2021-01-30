@@ -1,5 +1,7 @@
 use wasm_bindgen::prelude::*;
-use web_sys::console;
+
+mod furo;
+mod hai;
 
 // When the `wee_alloc` feature is enabled, this uses `wee_alloc` as the global
 // allocator.
@@ -17,8 +19,14 @@ pub fn main_js() -> Result<(), JsValue> {
     #[cfg(debug_assertions)]
     console_error_panic_hook::set_once();
 
-    // Your code goes here!
-    console::log_1(&JsValue::from_str("Hello world!"));
-
     Ok(())
+}
+
+#[wasm_bindgen]
+pub fn parse_tehai(s: &str) -> Result<JsValue, JsValue> {
+    use std::str::FromStr;
+    match furo::Furo::from_str(s) {
+        Ok(res) => Ok(JsValue::from(format!("{:?}", res))),
+        Err(e) => Err(JsValue::from(e.to_string())),
+    }
 }

@@ -1,3 +1,5 @@
+# Mahjong Tehai Viewer
+
 ## How to install
 
 ```sh
