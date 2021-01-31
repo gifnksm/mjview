@@ -1,9 +1,4 @@
-use crate::{
-    agari::Agari,
-    hai::Hai,
-    hai_vec::{self, HaiVec},
-    hai_with_attr::HaiWithAttr,
-};
+use crate::{agari::Agari, hai::Hai, hai_vec::HaiVec, hai_with_attr::HaiWithAttr};
 use std::{fmt, str::FromStr};
 use thiserror::Error;
 
@@ -27,7 +22,7 @@ pub(crate) enum ParseError {
     #[error("invalid number of hai: `{0}`")]
     InvalidNumberOfHai(HaiVec),
     #[error(transparent)]
-    HaiVec(#[from] hai_vec::ParseError),
+    HaiVec(#[from] <HaiVec as FromStr>::Err),
 }
 
 impl FromStr for AgariHai {

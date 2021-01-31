@@ -15,6 +15,10 @@ impl Agari {
             Self::Ron => "?",
         }
     }
+
+    pub(crate) fn is_agari_str(s: &str) -> bool {
+        Self::into_enum_iter().any(|a| s.starts_with(a.to_str()))
+    }
 }
 
 impl fmt::Display for Agari {

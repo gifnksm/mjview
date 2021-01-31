@@ -1,7 +1,4 @@
-use crate::{
-    hai_vec::{self, HaiVec},
-    hai_with_attr::HaiWithAttr,
-};
+use crate::{hai_vec::HaiVec, hai_with_attr::HaiWithAttr};
 use std::{fmt, str::FromStr};
 use thiserror::Error;
 
@@ -15,12 +12,18 @@ impl fmt::Display for JunTehai {
     }
 }
 
+impl JunTehai {
+    pub(crate) fn as_vec(&self) -> &HaiVec {
+        &self.0
+    }
+}
+
 #[derive(Debug, Error)]
 pub(crate) enum ParseError {
     #[error("invalid hai found: `{0}`")]
     InvalidHai(HaiWithAttr),
     #[error(transparent)]
-    HaiVec(#[from] hai_vec::ParseError),
+    HaiVec(#[from] <HaiVec as FromStr>::Err),
 }
 
 impl FromStr for JunTehai {

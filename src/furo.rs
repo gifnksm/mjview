@@ -1,9 +1,5 @@
 use crate::{
-    hai::Hai,
-    hai_category::HaiCategory,
-    hai_vec::{self, HaiVec},
-    hai_with_attr::HaiWithAttr,
-    tacha::Tacha,
+    hai::Hai, hai_category::HaiCategory, hai_vec::HaiVec, hai_with_attr::HaiWithAttr, tacha::Tacha,
 };
 use std::{fmt, str::FromStr};
 use thiserror::Error;
@@ -114,14 +110,14 @@ pub(crate) enum ParseError {
     #[error("invalid hai found: `{0}`")]
     InvalidHai(HaiWithAttr),
     #[error(transparent)]
-    Parse(#[from] hai_vec::ParseError),
+    HaiVec(#[from] <HaiVec as FromStr>::Err),
 }
 
 impl FromStr for Furo {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ParseError::*;
+        use ParseError as E;
 
         let hai_vec = HaiVec::from_str(s)?;
 
@@ -133,21 +129,21 @@ impl FromStr for Furo {
         for attr in &hai_vec.0 {
             all_hai.push(*attr.hai());
             if all_hai[0].category() != attr.hai().category() {
-                return Err(MultipleCategories(hai_vec.0[0], *attr));
+                return Err(E::MultipleCategories(hai_vec.0[0], *attr));
             }
             match *attr {
                 HaiWithAttr::FromTehai(hai) => from_tehai.push(hai),
                 HaiWithAttr::FromTacha(tacha, hai) => {
                     if let Some((old_tacha, old_hai)) = from_tacha.replace((tacha, hai)) {
-                        return Err(MultipleTacha(old_tacha, old_hai, tacha, hai));
+                        return Err(E::MultipleTacha(old_tacha, old_hai, tacha, hai));
                     }
                 }
                 HaiWithAttr::Kakan(hai) => {
                     if let Some(old_hai) = kakan.replace(hai) {
-                        return Err(MultipleKakan(old_hai, hai));
+                        return Err(E::MultipleKakan(old_hai, hai));
                     }
                 }
-                _ => return Err(InvalidHai(*attr)),
+                _ => return Err(E::InvalidHai(*attr)),
             }
         }
 
@@ -161,12 +157,12 @@ impl FromStr for Furo {
                     && h0.number() + 1 == h1.number()
                     && h1.number() + 1 == h2.number() =>
             {
-                let (tacha, from_tacha) = from_tacha.ok_or_else(|| MenzenChi(*h0, *h1, *h2))?;
+                let (tacha, from_tacha) = from_tacha.ok_or_else(|| E::MenzenChi(*h0, *h1, *h2))?;
                 if tacha != Tacha::Kamicha {
-                    return Err(ChiNotFromKamicha(tacha, from_tacha));
+                    return Err(E::ChiNotFromKamicha(tacha, from_tacha));
                 }
                 if let Some(hai) = kakan {
-                    return Err(ChiWithKakan(hai));
+                    return Err(E::ChiWithKakan(hai));
                 }
                 assert_eq!(from_tehai.len(), 2);
                 Furo::Chi {
@@ -176,9 +172,9 @@ impl FromStr for Furo {
             }
             // ポン
             [h0, h1, h2] if h0.number() == h1.number() && h1.number() == h2.number() => {
-                let (tacha, from_tacha) = from_tacha.ok_or_else(|| MenzenPon(*h0, *h1, *h2))?;
+                let (tacha, from_tacha) = from_tacha.ok_or_else(|| E::MenzenPon(*h0, *h1, *h2))?;
                 if let Some(hai) = kakan {
-                    return Err(PonWithKakan(hai));
+                    return Err(E::PonWithKakan(hai));
                 }
                 assert_eq!(from_tehai.len(), 2);
                 Furo::Pon {
@@ -222,10 +218,10 @@ impl FromStr for Furo {
                             ],
                         }
                     }
-                    (None, Some(kakan)) => return Err(AnkanWithKakan(kakan)),
+                    (None, Some(kakan)) => return Err(E::AnkanWithKakan(kakan)),
                 }
             }
-            _ => return Err(ParseError::InvalidCombination(hai_vec)),
+            _ => return Err(E::InvalidCombination(hai_vec)),
         };
         Ok(res)
     }
@@ -283,6 +279,6 @@ mod test {
         assert_matches!(err("<3+4+5p"), MultipleKakan(a, b) if h!("4p5p", a, b));
         assert_matches!(err("<346p"), InvalidCombination(a) if h!("<346p", a));
         assert_matches!(err("<1!23p"), InvalidHai(hai) if h!("!2p", hai));
-        assert_matches!(err("<012p"), Parse(_));
+        assert_matches!(err("<012p"), HaiVec(_));
     }
 }
