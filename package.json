@@ -5,7 +5,7 @@
   "scripts": {
     "build": "rimraf dist pkg && webpack",
     "start": "rimraf dist pkg && webpack serve --open --mode development",
-    "test": "cargo test && wasm-pack test --headless --firefox",
+    "test": "cargo test && wasm-pack test --headless --firefox --chrome",
     "format": "cargo fmt && prettier -w .",
     "lint": "cargo clippy && eslint .",
     "clean": "rimraf dist pkg target"

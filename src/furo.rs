@@ -43,44 +43,48 @@ pub(crate) enum Furo {
 
 impl fmt::Display for Furo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use Furo::*;
-        macro_rules! hai {
-            ($n:expr) => {
-                format_args!("{}{}", $n.number(), if $n.red() { "$" } else { "" })
-            };
-            ($n:expr, $($rest:expr),+ $(,)?) => {
-                format_args!("{}{}", hai!($n), hai!($($rest),+))
-            }
-        }
-        match self {
-            // <312m
-            Chi {
+        write!(f, "{}", self.to_vec())
+    }
+}
+
+impl Furo {
+    pub(crate) fn to_vec(&self) -> HaiVec {
+        use HaiWithAttr::*;
+        match *self {
+            Self::Chi {
                 from_tehai: [t0, t1],
                 from_kamicha: k0,
-            } => write_join!(f, Tacha::Kamicha, hai!(k0, t0, t1), k0.category()),
-            // ^333m
-            Pon {
+            } => HaiVec::new([FromTacha(Tacha::Kamicha, k0), FromTehai(t0), FromTehai(t1)]),
+            Self::Pon {
                 from_tehai: [te0, te1],
                 from_tacha: ta,
                 tacha,
-            } => write_join!(f, tacha, hai!(ta, te0, te1), ta.category()),
-            // >333+3m
-            Kakan {
+            } => HaiVec::new([FromTacha(tacha, ta), FromTehai(te0), FromTehai(te1)]),
+            Self::Kakan {
                 from_tehai: [te0, te1],
                 from_tacha: ta,
                 tacha,
                 added: a,
-            } => write_join!(f, tacha, hai!(ta, te0, te1), '+', hai!(a), ta.category()),
-            // ^3333m
-            Daiminkan {
+            } => HaiVec::new([
+                FromTacha(tacha, ta),
+                FromTehai(te0),
+                FromTehai(te1),
+                Kakan(a),
+            ]),
+            Self::Daiminkan {
                 from_tehai: [te0, te1, te2],
                 from_tacha: ta,
                 tacha,
-            } => write_join!(f, tacha, hai!(ta, te0, te1, te2), ta.category()),
+            } => HaiVec::new([
+                FromTacha(tacha, ta),
+                FromTehai(te0),
+                FromTehai(te1),
+                FromTehai(te2),
+            ]),
             // 3333m
-            Ankan {
+            Self::Ankan {
                 from_tehai: [t0, t1, t2, t3],
-            } => write_join!(f, hai!(t0, t1, t2, t3), t0.category()),
+            } => HaiVec::new([FromTehai(t0), FromTehai(t1), FromTehai(t2), FromTehai(t3)]),
         }
     }
 }

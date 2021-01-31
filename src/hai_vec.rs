@@ -36,6 +36,12 @@ impl fmt::Display for HaiVec {
     }
 }
 
+impl HaiVec {
+    pub(crate) fn new(v: impl Into<Vec<HaiWithAttr>>) -> Self {
+        Self(v.into())
+    }
+}
+
 #[derive(Debug, Error)]
 pub(crate) enum ParseError {
     #[error("number not found")]

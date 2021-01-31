@@ -48,10 +48,6 @@ impl Hai {
         self.number
     }
 
-    pub(crate) fn red(&self) -> bool {
-        self.red
-    }
-
     pub(crate) fn to_dora_str(&self) -> &'static str {
         if self.red {
             "$"

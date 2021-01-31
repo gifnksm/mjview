@@ -1,12 +1,10 @@
 use wasm_bindgen::prelude::*;
 
-#[macro_use]
-mod macros;
 mod furo;
 mod hai;
 mod hai_category;
-mod hai_with_attr;
 mod hai_vec;
+mod hai_with_attr;
 mod tacha;
 
 // When the `wee_alloc` feature is enabled, this uses `wee_alloc` as the global
