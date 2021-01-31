@@ -1,35 +1,12 @@
-use crate::hai::{self, Hai, HaiCategory};
-use enum_iterator::IntoEnumIterator;
+use crate::{
+    hai::Hai,
+    hai_category::HaiCategory,
+    hai_vec::{self, HaiVec},
+    hai_with_attr::HaiWithAttr,
+    tacha::Tacha,
+};
 use std::{fmt, str::FromStr};
 use thiserror::Error;
-
-/// プレイヤー
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, IntoEnumIterator)]
-pub(crate) enum Player {
-    /// 上家
-    Kamicha,
-    /// 対面
-    Toimen,
-    /// 下家
-    Shimocha,
-}
-
-impl fmt::Display for Player {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.tacha_mark())
-    }
-}
-
-impl Player {
-    fn tacha_mark(&self) -> char {
-        use Player::*;
-        match self {
-            Kamicha => '<',
-            Toimen => '^',
-            Shimocha => '>',
-        }
-    }
-}
 
 /// 副露
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -43,20 +20,20 @@ pub(crate) enum Furo {
     Pon {
         from_tehai: [Hai; 2], //< 手牌にあった牌
         from_tacha: Hai,      //< 他家から取得した牌
-        player: Player,       //< 牌の取得元のプレイヤー
+        tacha: Tacha,         //< 牌の取得元のプレイヤー
     },
     /// 加槓
     Kakan {
         from_tehai: [Hai; 2], //< ポン時に手牌にあった牌
         from_tacha: Hai,      //< ポン時に他家から取得した牌
-        player: Player,       //< ポン時の牌の取得元のプレイヤー
+        tacha: Tacha,         //< ポン時の牌の取得元のプレイヤー
         added: Hai,           //< 加槓で追加した牌
     },
     /// 大明槓
     Daiminkan {
         from_tehai: [Hai; 3], //< 手牌にあった牌
         from_tacha: Hai,      //< 他家から取得した牌
-        player: Player,       //< 牌の取得元のプレイヤー
+        tacha: Tacha,         //< 牌の取得元のプレイヤー
     },
     /// 暗槓
     Ankan {
@@ -80,219 +57,89 @@ impl fmt::Display for Furo {
             Chi {
                 from_tehai: [t0, t1],
                 from_kamicha: k0,
-            } => write!(
-                f,
-                "{}{}{}",
-                Player::Kamicha.tacha_mark(),
-                hai!(k0, t0, t1),
-                k0.category(),
-            ),
+            } => write_join!(f, Tacha::Kamicha, hai!(k0, t0, t1), k0.category()),
             // ^333m
             Pon {
                 from_tehai: [te0, te1],
                 from_tacha: ta,
-                player,
-            } => write!(
-                f,
-                "{}{}{}",
-                player.tacha_mark(),
-                hai!(ta, te0, te1),
-                ta.category()
-            ),
+                tacha,
+            } => write_join!(f, tacha, hai!(ta, te0, te1), ta.category()),
             // >333+3m
             Kakan {
                 from_tehai: [te0, te1],
                 from_tacha: ta,
-                player,
+                tacha,
                 added: a,
-            } => write!(
-                f,
-                "{}{}+{}{}",
-                player.tacha_mark(),
-                hai!(ta, te0, te1),
-                hai!(a),
-                ta.category()
-            ),
+            } => write_join!(f, tacha, hai!(ta, te0, te1), '+', hai!(a), ta.category()),
             // ^3333m
             Daiminkan {
                 from_tehai: [te0, te1, te2],
                 from_tacha: ta,
-                player,
-            } => write!(
-                f,
-                "{}{}{}",
-                player.tacha_mark(),
-                hai!(ta, te0, te1, te2),
-                ta.category()
-            ),
+                tacha,
+            } => write_join!(f, tacha, hai!(ta, te0, te1, te2), ta.category()),
             // 3333m
             Ankan {
                 from_tehai: [t0, t1, t2, t3],
-            } => write!(f, "{}{}", hai!(t0, t1, t2, t3), t0.category()),
+            } => write_join!(f, hai!(t0, t1, t2, t3), t0.category()),
         }
     }
 }
 
 #[derive(Debug, Error)]
-pub(crate) enum ParseFuroError {
-    #[error("number not found")]
-    NumberNotFound,
-    #[error("category not found at last")]
-    CategoryNotFound,
-    #[error("multiple categories found")]
-    MultipleCategories,
-    #[error("multiple hai from tacha found")]
-    MultipleTacha,
+pub(crate) enum ParseError {
+    #[error("multiple categories found: `{0}` and `{1}`")]
+    MultipleCategories(Hai, Hai),
+    #[error("multiple hai from tacha found: `{0}{1}` and `{2}{3}`")]
+    MultipleTacha(Tacha, Hai, Tacha, Hai),
     #[error("multiple kakan hai found")]
-    MultipleKakan,
-    #[error("invalid char found: `{0}`")]
-    InvalidChar(char),
-    #[error("menzen chi found")]
-    MenzenChi,
-    #[error("menzen pon found")]
-    MenzenPon,
-    #[error("chi not from kamicha: `{0}` from `{1}`")]
-    ChiNotFromKamicha(Hai, Player),
-    #[error("chi with kakan: `{0}`")]
+    MultipleKakan(Hai, Hai),
+    #[error("menzen chi found: `{}{}{}{}`", .0.number(), .1.number(), .2.number(), .0.category())]
+    MenzenChi(Hai, Hai, Hai),
+    #[error("menzen pon found: `{}{}{}{}`", .0.number(), .1.number(), .2.number(), .0.category())]
+    MenzenPon(Hai, Hai, Hai),
+    #[error("chi not from kamicha: `{0}{1}`")]
+    ChiNotFromKamicha(Tacha, Hai),
+    #[error("chi with kakan: `+{0}`")]
     ChiWithKakan(Hai),
-    #[error("pon with kakan: `{0}`")]
+    #[error("pon with kakan: `+{0}`")]
     PonWithKakan(Hai),
-    #[error("ankan with kakan: `{0}`")]
+    #[error("ankan with kakan: `+{0}`")]
     AnkanWithKakan(Hai),
     #[error("invalid tehai combination for furo")]
     InvalidTehaiCombination,
     #[error(transparent)]
-    NewHai(#[from] hai::NewError),
-}
-
-#[derive(Debug, Clone, Copy)]
-enum Prefix {
-    Player(Player),
-    Kakan,
-}
-
-fn parse_prefix(s: &str) -> Option<(Prefix, &str)> {
-    for p in Player::into_enum_iter() {
-        if let Some(rest) = s.strip_prefix(p.tacha_mark()) {
-            return Some((Prefix::Player(p), rest));
-        }
-    }
-    if let Some(rest) = s.strip_prefix('+') {
-        return Some((Prefix::Kakan, rest));
-    }
-    None
-}
-
-fn parse_category(s: &str) -> Option<(HaiCategory, &str)> {
-    for c in HaiCategory::into_enum_iter() {
-        if let Some(rest) = s.strip_prefix(c.as_char()) {
-            return Some((c, rest));
-        }
-    }
-    None
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
-enum HaiAttribute {
-    FromTehai,
-    FromTacha(Player),
-    Kakan,
-}
-
-#[derive(Debug, Clone, Default)]
-struct HaiBuilder {
-    prefix: Option<Prefix>,
-    number: Option<u8>,
-    category: Option<HaiCategory>,
-    red: bool,
-    player: Option<Player>,
-}
-
-impl HaiBuilder {
-    fn build(self) -> Result<(Hai, HaiAttribute), ParseFuroError> {
-        use HaiAttribute::*;
-        let hai = match (self.number, self.category) {
-            (Some(number), Some(category)) => Hai::try_new(category, number, self.red)?,
-            _ => return Err(ParseFuroError::CategoryNotFound),
-        };
-
-        let res = match self.prefix {
-            None => (hai, FromTehai),
-            Some(Prefix::Player(p)) => (hai, FromTacha(p)),
-            Some(Prefix::Kakan) => (hai, Kakan),
-        };
-        Ok(res)
-    }
+    Parse(#[from] hai_vec::ParseError),
 }
 
 impl FromStr for Furo {
-    type Err = ParseFuroError;
+    type Err = ParseError;
 
-    fn from_str(mut s: &str) -> Result<Self, Self::Err> {
-        use ParseFuroError::*;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use ParseError::*;
 
-        let mut builders: Vec<HaiBuilder> = vec![];
-        while !s.is_empty() {
-            let mut builder = HaiBuilder::default();
-            while let Some((prefix, rest)) = parse_prefix(s) {
-                builder.prefix = Some(prefix);
-                s = rest;
-            }
-
-            // number
-            let mut chars = s.chars();
-            let ch = chars.next().ok_or(ParseFuroError::NumberNotFound)?;
-            let number = ch.to_digit(10).ok_or(ParseFuroError::InvalidChar(ch))?;
-            builder.number = Some(number as u8);
-            s = chars.as_str();
-
-            // red (dora)
-            while let Some(rest) = s.strip_prefix('$') {
-                builder.red = true;
-                s = rest;
-            }
-
-            // suffix
-            while let Some((category, rest)) = parse_category(s) {
-                if builder.category.is_none() {
-                    builder.category = Some(category);
-                    for b in builders.iter_mut().rev() {
-                        match b.category {
-                            Some(bc) if bc != category => return Err(MultipleCategories),
-                            Some(_) => break,
-                            None => b.category = Some(category),
-                        }
-                    }
-                }
-                s = rest;
-            }
-
-            builders.push(builder);
-        }
-
-        let hai_pairs = builders.into_iter().map(HaiBuilder::build);
+        let hai_vec = HaiVec::from_str(s)?;
 
         let mut all_hai = vec![];
         let mut from_tehai = vec![];
         let mut from_tacha = None;
         let mut kakan = None;
 
-        for res in hai_pairs {
-            let (hai, attr) = res?;
-            all_hai.push(hai);
+        for attr in hai_vec.0 {
+            all_hai.push(*attr.hai());
+            if all_hai[0].category() != attr.hai().category() {
+                return Err(MultipleCategories(all_hai[0], *attr.hai()));
+            }
             match attr {
-                HaiAttribute::FromTehai => from_tehai.push(hai),
-                HaiAttribute::FromTacha(p) => {
-                    if from_tacha.is_some() {
-                        return Err(MultipleTacha);
+                HaiWithAttr::FromTehai(hai) => from_tehai.push(hai),
+                HaiWithAttr::FromTacha(tacha, hai) => {
+                    if let Some((old_tacha, old_hai)) = from_tacha.replace((tacha, hai)) {
+                        return Err(MultipleTacha(old_tacha, old_hai, tacha, hai));
                     }
-                    from_tacha = Some((p, hai));
                 }
-                HaiAttribute::Kakan => {
-                    if kakan.is_some() {
-                        return Err(MultipleKakan);
+                HaiWithAttr::Kakan(hai) => {
+                    if let Some(old_hai) = kakan.replace(hai) {
+                        return Err(MultipleKakan(old_hai, hai));
                     }
-                    kakan = Some(hai);
                 }
             }
         }
@@ -307,9 +154,9 @@ impl FromStr for Furo {
                     && h0.number() + 1 == h1.number()
                     && h1.number() + 1 == h2.number() =>
             {
-                let (player, from_tacha) = from_tacha.ok_or(MenzenChi)?;
-                if player != Player::Kamicha {
-                    return Err(ChiNotFromKamicha(from_tacha, player));
+                let (tacha, from_tacha) = from_tacha.ok_or_else(|| MenzenChi(*h0, *h1, *h2))?;
+                if tacha != Tacha::Kamicha {
+                    return Err(ChiNotFromKamicha(tacha, from_tacha));
                 }
                 if let Some(hai) = kakan {
                     return Err(ChiWithKakan(hai));
@@ -322,7 +169,7 @@ impl FromStr for Furo {
             }
             // ポン
             [h0, h1, h2] if h0.number() == h1.number() && h1.number() == h2.number() => {
-                let (player, from_tacha) = from_tacha.ok_or(MenzenPon)?;
+                let (tacha, from_tacha) = from_tacha.ok_or_else(|| MenzenPon(*h0, *h1, *h2))?;
                 if let Some(hai) = kakan {
                     return Err(PonWithKakan(hai));
                 }
@@ -330,7 +177,7 @@ impl FromStr for Furo {
                 Furo::Pon {
                     from_tehai: [from_tehai[0], from_tehai[1]],
                     from_tacha,
-                    player,
+                    tacha,
                 }
             }
             // 槓
@@ -340,21 +187,21 @@ impl FromStr for Furo {
                     && h2.number() == h3.number() =>
             {
                 match (from_tacha, kakan) {
-                    (Some((player, from_tacha)), Some(kakan)) => {
+                    (Some((tacha, from_tacha)), Some(kakan)) => {
                         assert_eq!(from_tehai.len(), 2);
                         Furo::Kakan {
                             from_tehai: [from_tehai[0], from_tehai[1]],
                             from_tacha,
-                            player,
+                            tacha,
                             added: kakan,
                         }
                     }
-                    (Some((player, from_tacha)), None) => {
+                    (Some((tacha, from_tacha)), None) => {
                         assert_eq!(from_tehai.len(), 3);
                         Furo::Daiminkan {
                             from_tehai: [from_tehai[0], from_tehai[1], from_tehai[2]],
                             from_tacha,
-                            player,
+                            tacha,
                         }
                     }
                     (None, None) => {
@@ -371,7 +218,7 @@ impl FromStr for Furo {
                     (None, Some(kakan)) => return Err(AnkanWithKakan(kakan)),
                 }
             }
-            _ => return Err(ParseFuroError::InvalidTehaiCombination),
+            _ => return Err(ParseError::InvalidTehaiCombination),
         };
         Ok(res)
     }
@@ -384,27 +231,34 @@ mod test {
 
     #[test]
     fn parse_furo() {
-        use ParseFuroError::*;
+        use ParseError::*;
         fn ok(s: &str) -> String {
             Furo::from_str(s).unwrap().to_string()
         }
-        fn err(s: &str) -> ParseFuroError {
+        fn err(s: &str) -> ParseError {
             Furo::from_str(s).unwrap_err()
+        }
+        macro_rules! h {
+            ($expected:expr, $($expr:expr),*) => {
+                {
+                    assert_eq!($expected, [$($expr.to_string()),*].join(""));
+                    true
+                }
+            }
         }
 
         // チー
         assert_eq!(ok("1<23p"), "<213p");
         assert_eq!(ok("4<5$p3p"), "<5$34p");
-        assert_matches!(err("456p"), MenzenChi);
-        assert_matches!(err("45^6p"),
-            ChiNotFromKamicha(hai, player) if hai.to_string() == "6p" && player == Player::Toimen);
-        assert_matches!(err("4<5+6m"), ChiWithKakan(hai) if hai.to_string() == "6m");
+        assert_matches!(err("456p"), MenzenChi(a, b, c) if h!("4p5p6p", a, b, c));
+        assert_matches!(err("45^6p"), ChiNotFromKamicha(tacha, hai) if h!("^6p", tacha, hai));
+        assert_matches!(err("4<5+6m"), ChiWithKakan(hai) if h!("6m", hai));
 
         // ポン
         assert_eq!(ok("3^33j"), "^333j");
         assert_eq!(ok("5^5$5m"), "^5$55m");
-        assert_matches!(err("333p"), MenzenPon);
-        assert_matches!(err("5+5^5j"), PonWithKakan(hai) if hai.to_string() == "5j");
+        assert_matches!(err("333p"), MenzenPon(a, b, c) if h!("3p3p3p", a, b, c));
+        assert_matches!(err("5+5^5j"), PonWithKakan(hai) if h!("5j", hai));
 
         // 加槓
         assert_eq!(ok("+1<111j"), "<111+1j");
@@ -414,6 +268,13 @@ mod test {
 
         // 暗槓
         assert_eq!(ok("3333p"), "3333p");
-        assert_matches!(err("33+33p"), AnkanWithKakan(hai) if hai.to_string() == "3p");
+        assert_matches!(err("33+33p"), AnkanWithKakan(hai) if h!("3p", hai));
+
+        // その他
+        assert_matches!(err("<3s3s3m"), MultipleCategories(a, b) if h!("3s3m", a, b));
+        assert_matches!(err("<3>45p"), MultipleTacha(a, b, c, d) if h!("<3p>4p", a, b, c, d));
+        assert_matches!(err("<3+4+5p"), MultipleKakan(a, b) if h!("4p5p", a, b));
+        assert_matches!(err("<346p"), InvalidTehaiCombination);
+        assert_matches!(err("<012p"), Parse(_));
     }
 }

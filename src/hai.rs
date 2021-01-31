@@ -1,33 +1,6 @@
-use enum_iterator::IntoEnumIterator;
+use crate::hai_category::HaiCategory;
 use std::fmt;
 use thiserror::Error;
-
-/// 牌の種類
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, IntoEnumIterator)]
-pub(crate) enum HaiCategory {
-    Manzu, //< 萬子
-    Pinzu, //< 筒子
-    Souzu, //< 索子
-    Jihai, //< 字牌
-}
-
-impl HaiCategory {
-    pub(crate) fn as_char(&self) -> char {
-        use HaiCategory::*;
-        match self {
-            Manzu => 'm',
-            Pinzu => 'p',
-            Souzu => 's',
-            Jihai => 'j',
-        }
-    }
-}
-
-impl fmt::Display for HaiCategory {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.as_char())
-    }
-}
 
 /// 牌
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -39,19 +12,13 @@ pub(crate) struct Hai {
 
 impl fmt::Display for Hai {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}{}{}",
-            self.number,
-            if self.red { "$" } else { "" },
-            self.category
-        )
+        write!(f, "{}{}{}", self.number, self.to_dora_str(), self.category)
     }
 }
 
 #[derive(Debug, Error)]
 pub(crate) enum NewError {
-    #[error("invalid number `{number}` for category `{category}`")]
+    #[error("invalid hai: `{number}{category}`")]
     InvalidNumber { number: u8, category: HaiCategory },
 }
 
@@ -83,6 +50,14 @@ impl Hai {
 
     pub(crate) fn red(&self) -> bool {
         self.red
+    }
+
+    pub(crate) fn to_dora_str(&self) -> &'static str {
+        if self.red {
+            "$"
+        } else {
+            ""
+        }
     }
 }
 
