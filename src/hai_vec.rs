@@ -1,4 +1,5 @@
 use crate::{
+    agari::Agari,
     hai::{self, Hai},
     hai_category::HaiCategory,
     hai_with_attr::HaiWithAttr,
@@ -120,6 +121,7 @@ impl FromStr for HaiVec {
 pub(crate) enum Prefix {
     Tacha(Tacha),
     Kakan,
+    Agari(Agari),
 }
 
 impl fmt::Display for Prefix {
@@ -127,6 +129,7 @@ impl fmt::Display for Prefix {
         match self {
             Prefix::Tacha(tacha) => write!(f, "{}", tacha),
             Prefix::Kakan => write!(f, "+"),
+            Prefix::Agari(agari) => write!(f, "{}", agari),
         }
     }
 }
@@ -153,20 +156,27 @@ impl Builder {
             None => FromTehai(hai),
             Some(Prefix::Tacha(p)) => FromTacha(p, hai),
             Some(Prefix::Kakan) => Kakan(hai),
+            Some(Prefix::Agari(agari)) => Agari(agari, hai),
         };
         Ok(res)
     }
 }
 
 fn parse_prefix(s: &str) -> Option<(Prefix, &str)> {
-    for p in Tacha::into_enum_iter() {
-        if let Some(rest) = s.strip_prefix(p.to_str()) {
-            return Some((Prefix::Tacha(p), rest));
+    for tacha in Tacha::into_enum_iter() {
+        if let Some(rest) = s.strip_prefix(tacha.to_str()) {
+            return Some((Prefix::Tacha(tacha), rest));
         }
     }
     if let Some(rest) = s.strip_prefix('+') {
         return Some((Prefix::Kakan, rest));
     }
+    for agari in Agari::into_enum_iter() {
+        if let Some(rest) = s.strip_prefix(agari.to_str()) {
+            return Some((Prefix::Agari(agari), rest));
+        }
+    }
+
     None
 }
 

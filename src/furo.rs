@@ -92,25 +92,27 @@ impl Furo {
 #[derive(Debug, Error)]
 pub(crate) enum ParseError {
     #[error("multiple categories found: `{0}` and `{1}`")]
-    MultipleCategories(Hai, Hai),
-    #[error("multiple hai from tacha found: `{0}{1}` and `{2}{3}`")]
+    MultipleCategories(HaiWithAttr, HaiWithAttr),
+    #[error("multiple hai from tacha found: `{}` and `{}`", HaiWithAttr::FromTacha(*.0, *.1), HaiWithAttr::FromTacha(*.2, *.3))]
     MultipleTacha(Tacha, Hai, Tacha, Hai),
-    #[error("multiple kakan hai found")]
+    #[error("multiple kakan hai found: `{}` and `{}`", HaiWithAttr::Kakan(*.0), HaiWithAttr::Kakan(*.1))]
     MultipleKakan(Hai, Hai),
-    #[error("menzen chi found: `{}{}{}{}`", .0.number(), .1.number(), .2.number(), .0.category())]
+    #[error("menzen chi found: `{}`", HaiVec::new([HaiWithAttr::FromTehai(*.0), HaiWithAttr::FromTehai(*.1), HaiWithAttr::FromTehai(*.2)]))]
     MenzenChi(Hai, Hai, Hai),
-    #[error("menzen pon found: `{}{}{}{}`", .0.number(), .1.number(), .2.number(), .0.category())]
+    #[error("menzen pon found: `{}`", HaiVec::new([HaiWithAttr::FromTehai(*.0), HaiWithAttr::FromTehai(*.1), HaiWithAttr::FromTehai(*.2)]))]
     MenzenPon(Hai, Hai, Hai),
-    #[error("chi not from kamicha: `{0}{1}`")]
+    #[error("chi not from kamicha: `{}", HaiWithAttr::FromTacha(*.0, *.1))]
     ChiNotFromKamicha(Tacha, Hai),
-    #[error("chi with kakan: `+{0}`")]
+    #[error("chi with kakan: `{}`", HaiWithAttr::Kakan(*.0))]
     ChiWithKakan(Hai),
-    #[error("pon with kakan: `+{0}`")]
+    #[error("pon with kakan: `{}`", HaiWithAttr::Kakan(*.0))]
     PonWithKakan(Hai),
-    #[error("ankan with kakan: `+{0}`")]
+    #[error("ankan with kakan: `{}`", HaiWithAttr::Kakan(*.0))]
     AnkanWithKakan(Hai),
-    #[error("invalid tehai combination for furo")]
-    InvalidTehaiCombination,
+    #[error("invalid tehai combination for furo: `{0}`")]
+    InvalidCombination(HaiVec),
+    #[error("invalid hai found: `{0}`")]
+    InvalidHai(HaiWithAttr),
     #[error(transparent)]
     Parse(#[from] hai_vec::ParseError),
 }
@@ -128,12 +130,12 @@ impl FromStr for Furo {
         let mut from_tacha = None;
         let mut kakan = None;
 
-        for attr in hai_vec.0 {
+        for attr in &hai_vec.0 {
             all_hai.push(*attr.hai());
             if all_hai[0].category() != attr.hai().category() {
-                return Err(MultipleCategories(all_hai[0], *attr.hai()));
+                return Err(MultipleCategories(hai_vec.0[0], *attr));
             }
-            match attr {
+            match *attr {
                 HaiWithAttr::FromTehai(hai) => from_tehai.push(hai),
                 HaiWithAttr::FromTacha(tacha, hai) => {
                     if let Some((old_tacha, old_hai)) = from_tacha.replace((tacha, hai)) {
@@ -145,6 +147,7 @@ impl FromStr for Furo {
                         return Err(MultipleKakan(old_hai, hai));
                     }
                 }
+                _ => return Err(InvalidHai(*attr)),
             }
         }
 
@@ -222,7 +225,7 @@ impl FromStr for Furo {
                     (None, Some(kakan)) => return Err(AnkanWithKakan(kakan)),
                 }
             }
-            _ => return Err(ParseError::InvalidTehaiCombination),
+            _ => return Err(ParseError::InvalidCombination(hai_vec)),
         };
         Ok(res)
     }
@@ -275,10 +278,11 @@ mod test {
         assert_matches!(err("33+33p"), AnkanWithKakan(hai) if h!("3p", hai));
 
         // その他
-        assert_matches!(err("<3s3s3m"), MultipleCategories(a, b) if h!("3s3m", a, b));
+        assert_matches!(err("<3s3s3m"), MultipleCategories(a, b) if h!("<3s3m", a, b));
         assert_matches!(err("<3>45p"), MultipleTacha(a, b, c, d) if h!("<3p>4p", a, b, c, d));
         assert_matches!(err("<3+4+5p"), MultipleKakan(a, b) if h!("4p5p", a, b));
-        assert_matches!(err("<346p"), InvalidTehaiCombination);
+        assert_matches!(err("<346p"), InvalidCombination(a) if h!("<346p", a));
+        assert_matches!(err("<1!23p"), InvalidHai(hai) if h!("!2p", hai));
         assert_matches!(err("<012p"), Parse(_));
     }
 }
