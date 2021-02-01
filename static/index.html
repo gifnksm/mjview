@@ -12,6 +12,12 @@
         color: red;
         font-family: monospace;
       }
+      dfn {
+        text-decoration: underline dashed black;
+      }
+      :target {
+        color: red;
+      }
     </style>
   </head>
   <body>
@@ -105,9 +111,9 @@
           >の組み合わせにより表現されます。
         </p>
         <p>
-          副露を構成する牌のうち、<dfn id="dfn-furo-tsumo"
-            >ツモにより取得した牌</dfn
-          >および<dfn id="dfn-furo-jun-tehai">元々純手牌に含まれていた牌</dfn
+          <dfn id="dfn-furo-tsumo">ツモにより取得した牌</dfn>および<dfn
+            id="dfn-furo-jun-tehai"
+            >元々純手牌に含まれていた牌</dfn
           >は<a href="#dfn-renzoku">連続する牌</a>と同様の記法で表現します。
         </p>
         <p>
@@ -123,7 +129,7 @@
           <dfn id="dfn-furo-kakan">加槓で追加した牌</dfn
           >は、<code>+</code>を牌の数字の前に付与します。
         </p>
-        <p>副露のテキストでの表現例を以下に示します。</p>
+        <p>副露の例を以下に示します。</p>
         <ul>
           <li>チー: <code>&lt;213p</code></li>
           <li>対面からのポン: <code>^111j</code></li>
@@ -153,6 +159,19 @@
           <dt>三色同巡</dt>
           <dd><code>12344m123p33j &lt;213p ?3j</code></dd>
         </dl>
+      </section>
+      <section>
+        <h2>記号の由来</h2>
+        <p>本記法で利用されている記号の由来は以下の通りです。</p>
+        <ul>
+          <li>赤ドラ <code>$</code>: dollar からの連想</li>
+          <li>上家 <code>&lt;</code>: 上家は自家の左側にいることから</li>
+          <li>対面 <code>^</code>: 対面は自家の向かい側 (前) にいることから</li>
+          <li>下家 <code>&gt;</code>: 下家は自家の右側にいることをから</li>
+          <li>加槓 <code>+</code>: ポンに牌をひとつ加えることから</li>
+          <li>ツモ <code>!</code>: ツモると皆びっくりすることから</li>
+          <li>ロン <code>?</code>: 心の中で他家に牌をねだることから</li>
+        </ul>
       </section>
     </section>
     <script type="module" src="index.js"></script>
