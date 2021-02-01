@@ -1,5 +1,7 @@
 # Mahjong Tehai Viewer
 
+[Live Demo](https://gifnksm.github.io/mjview/)
+
 ## How to install
 
 ```sh
