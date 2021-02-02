@@ -1,6 +1,7 @@
-let imp = import("../pkg/index.js");
+import "./mahjong_hai.js";
+
 let mod;
-imp
+import("../pkg/index.js")
   .then((wasm) => {
     mod = wasm;
     let message = document.getElementById("message");
@@ -17,3 +18,23 @@ imp
     });
   })
   .catch(console.error);
+
+// test
+let addHai = (hai) => {
+  let elem = document.createElement("mahjong-hai");
+  elem.hai = hai;
+  document.forms[0].appendChild(elem);
+};
+for (let prefix of ["", "y_"]) {
+  for (let cat of ["m", "p", "s"]) {
+    for (let i = 1; i <= 9; i++) {
+      addHai(`${prefix}${i}${cat}`);
+    }
+  }
+  addHai(`${prefix}5$m`);
+  addHai(`${prefix}5$p`);
+  addHai(`${prefix}5$s`);
+  for (let i = 1; i <= 7; i++) {
+    addHai(`${prefix}${i}j`);
+  }
+}

@@ -87,12 +87,12 @@ impl FromStr for HaiVec {
             builder.number.replace(number as u8);
             s = chars.as_str();
 
-            // red (dora)
+            // akadora
             while let Some(rest) = s.strip_prefix('$') {
-                if builder.red {
+                if builder.akadora {
                     return Err(MultipleDora);
                 }
-                builder.red = true;
+                builder.akadora = true;
                 s = rest;
             }
 
@@ -139,7 +139,7 @@ struct Builder {
     prefix: Option<Prefix>,
     number: Option<u8>,
     category: Option<HaiCategory>,
-    red: bool,
+    akadora: bool,
     tacha: Option<Tacha>,
 }
 
@@ -148,7 +148,7 @@ impl Builder {
         use HaiWithAttr::*;
         use ParseError::*;
         let hai = match (self.number, self.category) {
-            (Some(number), Some(category)) => Hai::try_new(category, number, self.red)?,
+            (Some(number), Some(category)) => Hai::try_new(category, number, self.akadora)?,
             _ => return Err(CategoryNotFound),
         };
 

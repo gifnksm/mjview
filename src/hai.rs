@@ -7,7 +7,7 @@ use thiserror::Error;
 pub(crate) struct Hai {
     category: HaiCategory,
     number: u8,
-    red: bool,
+    akadora: bool,
 }
 
 impl fmt::Display for Hai {
@@ -20,10 +20,16 @@ impl fmt::Display for Hai {
 pub(crate) enum NewError {
     #[error("invalid hai: `{number}{category}`")]
     InvalidNumber { number: u8, category: HaiCategory },
+    #[error("invalid akadora: `{number}${category}`")]
+    InvalidAkadora { number: u8, category: HaiCategory },
 }
 
 impl Hai {
-    pub(crate) fn try_new(category: HaiCategory, number: u8, red: bool) -> Result<Self, NewError> {
+    pub(crate) fn try_new(
+        category: HaiCategory,
+        number: u8,
+        akadora: bool,
+    ) -> Result<Self, NewError> {
         use {HaiCategory::*, NewError::*};
         let range = match category {
             Manzu => (1..=9), // 1-9
@@ -34,10 +40,13 @@ impl Hai {
         if !range.contains(&number) {
             return Err(InvalidNumber { number, category });
         }
+        if akadora && (number != 5 || category == Jihai) {
+            return Err(InvalidAkadora { number, category });
+        }
         Ok(Self {
             category,
             number,
-            red,
+            akadora,
         })
     }
 
@@ -49,7 +58,7 @@ impl Hai {
     }
 
     pub(crate) fn to_dora_str(&self) -> &'static str {
-        if self.red {
+        if self.akadora {
             "$"
         } else {
             ""
@@ -65,25 +74,26 @@ mod test {
     #[test]
     fn hai_new() {
         use HaiCategory::*;
-        fn ok(category: HaiCategory, number: u8, red: bool) {
+        fn ok(category: HaiCategory, number: u8, akadora: bool) {
             assert_eq!(
-                Hai::try_new(category, number, red).unwrap(),
+                Hai::try_new(category, number, akadora).unwrap(),
                 Hai {
                     category,
                     number,
-                    red
+                    akadora
                 }
             );
         }
-        fn invalid_number(category: HaiCategory, number: u8, red: bool) {
+        fn invalid_number(category: HaiCategory, number: u8, akadora: bool) {
             assert_matches!(
-                Hai::try_new(category, number, red).unwrap_err(),
+                Hai::try_new(category, number, akadora).unwrap_err(),
                 NewError::InvalidNumber { number: n, category: c } if n == number && c == category
             );
         }
         ok(Manzu, 8, false);
         ok(Souzu, 4, false);
-        ok(Jihai, 5, true);
+        ok(Pinzu, 5, true);
+        ok(Jihai, 5, false);
         invalid_number(Manzu, 10, false);
         invalid_number(Souzu, 10, false);
         invalid_number(Pinzu, 10, false);

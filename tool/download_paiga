@@ -1,0 +1,40 @@
+#!/bin/bash -eu
+
+# move to project root
+cd "$(readlink -f $(dirname $0)/..)"
+
+temp=$(mktemp -d)
+trap "rm -rf \"${temp}\"" EXIT
+
+wget 'http://ancoroking.world.coocan.jp/download/paiga_yellow.zip' -O "${temp}/paiga_yellow.zip"
+unzip "${temp}/paiga_yellow.zip" -d "${temp}/"
+
+src_dir="${temp}/paiga_yellow"
+dst_dir='./static/image/paiga/'
+
+rm -rf "${dst_dir}"/*.png
+
+names=(
+    'm5a:5\$m'
+    'p5a:5\$p'
+    's5a:5\$s'
+    'ton:1j'
+    'nan:2j'
+    'sha:3j'
+    'pei:4j'
+    'hak:5j'
+    'hat:6j'
+    'chu:7j'
+)
+
+for cat in m p s; do
+    for n in $(seq 1 9); do
+        names+=("${cat}${n}:${n}${cat}")
+    done
+done
+
+for pair in "${names[@]}"; do
+    IFS=: read src_name dst_name <<< "${pair}"
+    convert "${src_dir}/${src_name}.gif" -trim "${dst_dir}/${dst_name}.png"
+    convert "${src_dir}/y_${src_name}.gif" -trim "${dst_dir}/y_${dst_name}.png"
+done
