@@ -6,6 +6,9 @@
   "[rust]": {
     "editor.defaultFormatter": "matklad.rust-analyzer"
   },
+  "[toml]": {
+    "editor.defaultFormatter": "be5invis.toml"
+  },
   "cSpell.words": [
     "akadora",
     "ankan",
