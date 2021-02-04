@@ -4,7 +4,7 @@ use thiserror::Error;
 
 /// 牌
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Hai {
+pub(crate) struct Hai {
     category: HaiCategory,
     number: u8,
     akadora: bool,

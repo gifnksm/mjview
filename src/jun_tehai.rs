@@ -1,10 +1,12 @@
-use crate::{hai::Hai, hai_vec::HaiVec, hai_with_attr::HaiWithAttr};
+use crate::{hai::Hai, hai_image::HaiImage, hai_vec::HaiVec, hai_with_attr::HaiWithAttr};
 use std::{fmt, str::FromStr};
 use thiserror::Error;
+use wasm_bindgen::prelude::*;
 
 /// 純手牌 (狭義の手牌。手牌のうち副露でないもの)
+#[wasm_bindgen]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct JunTehai(Vec<Hai>);
+pub struct JunTehai(Vec<Hai>);
 
 impl fmt::Display for JunTehai {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -26,11 +28,28 @@ impl JunTehai {
                 .collect::<Vec<_>>(),
         )
     }
+
+    fn to_image(&self) -> Vec<HaiImage> {
+        self.0.iter().copied().map(HaiImage::normal).collect()
+    }
+}
+
+#[wasm_bindgen]
+impl JunTehai {
+    #[wasm_bindgen(js_name = "toString")]
+    pub fn to_string_js(&self) -> String {
+        self.to_string()
+    }
+
+    #[wasm_bindgen(js_name = "toImage")]
+    pub fn to_image_js(&self) -> Box<[JsValue]> {
+        self.to_image().into_iter().map(JsValue::from).collect()
+    }
 }
 
 #[derive(Debug, Error)]
 #[error(transparent)]
-pub(crate) struct ParseError(#[from] ParseErrorKind);
+pub struct ParseError(#[from] ParseErrorKind);
 
 #[derive(Debug, Error)]
 enum ParseErrorKind {

@@ -1,10 +1,12 @@
 use crate::{agari::Agari, agari_hai::AgariHai, furo::Furo, jun_tehai::JunTehai};
 use std::{fmt, str::FromStr};
 use thiserror::Error;
+use wasm_bindgen::prelude::*;
 
 /// 手牌
+#[wasm_bindgen]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct Tehai {
+pub struct Tehai {
     jun_tehai: JunTehai,
     furo: Vec<Furo>,
     agari: AgariHai,
@@ -21,9 +23,32 @@ impl fmt::Display for Tehai {
     }
 }
 
+#[wasm_bindgen]
+impl Tehai {
+    #[wasm_bindgen(js_name = "toString")]
+    pub fn to_string_js(&self) -> String {
+        self.to_string()
+    }
+
+    #[wasm_bindgen(getter, js_name = "junTehai")]
+    pub fn jun_tehai_js(&self) -> JunTehai {
+        self.jun_tehai.clone()
+    }
+
+    #[wasm_bindgen(getter, js_name = "furo")]
+    pub fn furo_js(&self) -> Box<[JsValue]> {
+        self.furo.iter().copied().map(JsValue::from).collect()
+    }
+
+    #[wasm_bindgen(getter, js_name = "agari")]
+    pub fn agari_js(&self) -> AgariHai {
+        self.agari
+    }
+}
+
 #[derive(Debug, Error)]
 #[error(transparent)]
-pub(crate) struct ParseError(#[from] ParseErrorKind);
+pub struct ParseError(#[from] ParseErrorKind);
 
 #[derive(Debug, Error)]
 enum ParseErrorKind {

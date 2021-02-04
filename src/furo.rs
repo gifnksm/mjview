@@ -1,12 +1,18 @@
 use crate::{
-    hai::Hai, hai_category::HaiCategory, hai_vec::HaiVec, hai_with_attr::HaiWithAttr, tacha::Tacha,
+    hai::Hai, hai_category::HaiCategory, hai_image::HaiImage, hai_vec::HaiVec,
+    hai_with_attr::HaiWithAttr, tacha::Tacha,
 };
 use std::{fmt, str::FromStr};
 use thiserror::Error;
+use wasm_bindgen::prelude::*;
 
 /// 副露
+#[wasm_bindgen]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) enum Furo {
+pub struct Furo(FuroKind);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum FuroKind {
     /// チー
     Chi {
         from_tehai: [Hai; 2], //< 手牌にあった牌
@@ -46,17 +52,17 @@ impl fmt::Display for Furo {
 impl Furo {
     pub(crate) fn to_vec(&self) -> HaiVec {
         use HaiWithAttr::*;
-        match *self {
-            Self::Chi {
+        match self.0 {
+            FuroKind::Chi {
                 from_tehai: [t0, t1],
                 from_kamicha: k0,
             } => HaiVec::new([FromTacha(Tacha::Kamicha, k0), FromTehai(t0), FromTehai(t1)]),
-            Self::Pon {
+            FuroKind::Pon {
                 from_tehai: [te0, te1],
                 from_tacha: ta,
                 tacha,
             } => HaiVec::new([FromTacha(tacha, ta), FromTehai(te0), FromTehai(te1)]),
-            Self::Kakan {
+            FuroKind::Kakan {
                 from_tehai: [te0, te1],
                 from_tacha: ta,
                 tacha,
@@ -67,7 +73,7 @@ impl Furo {
                 FromTehai(te1),
                 Kakan(a),
             ]),
-            Self::Daiminkan {
+            FuroKind::Daiminkan {
                 from_tehai: [te0, te1, te2],
                 from_tacha: ta,
                 tacha,
@@ -77,17 +83,82 @@ impl Furo {
                 FromTehai(te1),
                 FromTehai(te2),
             ]),
-            // 3333m
-            Self::Ankan {
+            FuroKind::Ankan {
                 from_tehai: [t0, t1, t2, t3],
             } => HaiVec::new([FromTehai(t0), FromTehai(t1), FromTehai(t2), FromTehai(t3)]),
         }
+    }
+
+    fn to_image(&self) -> Vec<HaiImage> {
+        use HaiImage as H;
+        match self.0 {
+            FuroKind::Chi {
+                from_tehai: [t0, t1],
+                from_kamicha: k0,
+            } => vec![H::sideways(k0), H::normal(t0), H::normal(t1)],
+            FuroKind::Pon {
+                from_tehai: [te0, te1],
+                from_tacha: ta,
+                tacha,
+            } => {
+                let ta = H::sideways(ta);
+                let (te0, te1) = (H::normal(te0), H::normal(te1));
+                match tacha {
+                    Tacha::Kamicha => vec![ta, te0, te1],
+                    Tacha::Toimen => vec![te0, ta, te1],
+                    Tacha::Shimocha => vec![te0, te1, ta],
+                }
+            }
+            FuroKind::Kakan {
+                from_tehai: [te0, te1],
+                from_tacha: ta,
+                tacha,
+                added: a,
+            } => {
+                let s = H::stack(ta, a);
+                let (te0, te1) = (H::normal(te0), H::normal(te1));
+                match tacha {
+                    Tacha::Kamicha => vec![s, te0, te1],
+                    Tacha::Toimen => vec![te0, s, te1],
+                    Tacha::Shimocha => vec![te0, te1, s],
+                }
+            }
+            FuroKind::Daiminkan {
+                from_tehai: [te0, te1, te2],
+                from_tacha: ta,
+                tacha,
+            } => {
+                let ta = H::sideways(ta);
+                let (te0, te1, te2) = (H::normal(te0), H::normal(te1), H::normal(te2));
+                match tacha {
+                    Tacha::Kamicha => vec![ta, te0, te1, te2],
+                    Tacha::Toimen => vec![te0, ta, te1, te2],
+                    Tacha::Shimocha => vec![te0, te1, te2, ta],
+                }
+            }
+            FuroKind::Ankan {
+                from_tehai: [t0, t1, t2, t3],
+            } => vec![H::hidden(t0), H::normal(t1), H::normal(t2), H::hidden(t3)],
+        }
+    }
+}
+
+#[wasm_bindgen]
+impl Furo {
+    #[wasm_bindgen(js_name = "toString")]
+    pub fn to_string_js(&self) -> String {
+        self.to_string()
+    }
+
+    #[wasm_bindgen(js_name = "toImage")]
+    pub fn to_image_js(&self) -> Box<[JsValue]> {
+        self.to_image().into_iter().map(JsValue::from).collect()
     }
 }
 
 #[derive(Debug, Error)]
 #[error(transparent)]
-pub(crate) struct ParseError(#[from] ParseErrorKind);
+pub struct ParseError(#[from] ParseErrorKind);
 
 #[derive(Debug, Error)]
 enum ParseErrorKind {
@@ -169,7 +240,7 @@ impl FromStr for Furo {
                     return Err(E::ChiWithKakan(hai).into());
                 }
                 assert_eq!(from_tehai.len(), 2);
-                Furo::Chi {
+                FuroKind::Chi {
                     from_tehai: [from_tehai[0], from_tehai[1]],
                     from_kamicha: from_tacha,
                 }
@@ -181,7 +252,7 @@ impl FromStr for Furo {
                     return Err(E::PonWithKakan(hai).into());
                 }
                 assert_eq!(from_tehai.len(), 2);
-                Furo::Pon {
+                FuroKind::Pon {
                     from_tehai: [from_tehai[0], from_tehai[1]],
                     from_tacha,
                     tacha,
@@ -196,7 +267,7 @@ impl FromStr for Furo {
                 match (from_tacha, kakan) {
                     (Some((tacha, from_tacha)), Some(kakan)) => {
                         assert_eq!(from_tehai.len(), 2);
-                        Furo::Kakan {
+                        FuroKind::Kakan {
                             from_tehai: [from_tehai[0], from_tehai[1]],
                             from_tacha,
                             tacha,
@@ -205,7 +276,7 @@ impl FromStr for Furo {
                     }
                     (Some((tacha, from_tacha)), None) => {
                         assert_eq!(from_tehai.len(), 3);
-                        Furo::Daiminkan {
+                        FuroKind::Daiminkan {
                             from_tehai: [from_tehai[0], from_tehai[1], from_tehai[2]],
                             from_tacha,
                             tacha,
@@ -213,7 +284,7 @@ impl FromStr for Furo {
                     }
                     (None, None) => {
                         assert_eq!(from_tehai.len(), 4);
-                        Furo::Ankan {
+                        FuroKind::Ankan {
                             from_tehai: [
                                 from_tehai[0],
                                 from_tehai[1],
@@ -227,7 +298,7 @@ impl FromStr for Furo {
             }
             _ => return Err(E::InvalidCombination(hai_vec).into()),
         };
-        Ok(res)
+        Ok(Furo(res))
     }
 }
 

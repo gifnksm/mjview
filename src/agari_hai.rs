@@ -1,10 +1,14 @@
-use crate::{agari::Agari, hai::Hai, hai_vec::HaiVec, hai_with_attr::HaiWithAttr};
+use crate::{
+    agari::Agari, hai::Hai, hai_image::HaiImage, hai_vec::HaiVec, hai_with_attr::HaiWithAttr,
+};
 use std::{fmt, str::FromStr};
 use thiserror::Error;
+use wasm_bindgen::prelude::*;
 
 /// あがり牌
+#[wasm_bindgen]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct AgariHai {
+pub struct AgariHai {
     agari: Agari,
     hai: Hai,
 }
@@ -17,7 +21,7 @@ impl fmt::Display for AgariHai {
 
 #[derive(Debug, Error)]
 #[error(transparent)]
-pub(crate) struct ParseError(#[from] ParseErrorKind);
+pub struct ParseError(#[from] ParseErrorKind);
 
 #[derive(Debug, Error)]
 enum ParseErrorKind {
@@ -45,6 +49,20 @@ impl FromStr for AgariHai {
             HaiWithAttr::Agari(agari, hai) => Ok(Self { agari, hai }),
             _ => Err(E::InvalidHai(hai).into()),
         }
+    }
+}
+
+impl AgariHai {
+    fn to_image(&self) -> HaiImage {
+        HaiImage::normal(self.hai)
+    }
+}
+
+#[wasm_bindgen]
+impl AgariHai {
+    #[wasm_bindgen(js_name = "toImage")]
+    pub fn to_image_js(&self) -> HaiImage {
+        self.to_image()
     }
 }
 

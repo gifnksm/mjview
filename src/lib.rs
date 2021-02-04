@@ -6,6 +6,7 @@ mod agari_hai;
 mod furo;
 mod hai;
 mod hai_category;
+mod hai_image;
 mod hai_vec;
 mod hai_with_attr;
 mod jun_tehai;
@@ -32,10 +33,10 @@ pub fn main_js() -> Result<(), JsValue> {
 }
 
 #[wasm_bindgen]
-pub fn parse_tehai(s: &str) -> Result<JsValue, JsValue> {
+pub fn parse_tehai(s: &str) -> Result<Tehai, JsValue> {
     use std::str::FromStr;
     match Tehai::from_str(s) {
-        Ok(res) => Ok(JsValue::from(format!("{:?}", res))),
+        Ok(res) => Ok(res),
         Err(e) => Err(JsValue::from(e.to_string())),
     }
 }

@@ -12,6 +12,9 @@ import("../pkg/index.js")
       try {
         let res = mod.parse_tehai(form.elements["tehai"].value);
         console.log(res);
+        console.log(res.junTehai.toImage().toString());
+        console.log(res.furo.map((f) => `{${f.toImage()}}`).toString());
+        console.log(res.agari.toImage().toString());
       } catch (e) {
         message.textContent = e;
       }
