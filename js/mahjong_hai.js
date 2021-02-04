@@ -40,4 +40,4 @@ class MahjongHai extends HTMLElement {
   }
 }
 
-customElements.define("mahjong-hai", MahjongHai);
+customElements.define("mj-hai", MahjongHai);

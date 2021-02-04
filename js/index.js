@@ -1,4 +1,4 @@
-import "./mahjong_hai.js";
+import "./mahjong_hai";
 
 let mod;
 import("../pkg/index.js")
@@ -21,7 +21,7 @@ import("../pkg/index.js")
 
 // test
 let addHai = (hai) => {
-  let elem = document.createElement("mahjong-hai");
+  let elem = document.createElement("mj-hai");
   elem.hai = hai;
   document.forms[0].appendChild(elem);
 };

@@ -1,20 +1,30 @@
-use crate::{hai_vec::HaiVec, hai_with_attr::HaiWithAttr};
+use crate::{hai::Hai, hai_vec::HaiVec, hai_with_attr::HaiWithAttr};
 use std::{fmt, str::FromStr};
 use thiserror::Error;
 
 /// 純手牌 (狭義の手牌。手牌のうち副露でないもの)
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct JunTehai(HaiVec);
+pub(crate) struct JunTehai(Vec<Hai>);
 
 impl fmt::Display for JunTehai {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.to_hai_vec())
     }
 }
 
 impl JunTehai {
-    pub(crate) fn as_vec(&self) -> &HaiVec {
+    pub(crate) fn as_vec(&self) -> &[Hai] {
         &self.0
+    }
+
+    fn to_hai_vec(&self) -> HaiVec {
+        HaiVec::new(
+            self.0
+                .iter()
+                .copied()
+                .map(HaiWithAttr::FromTehai)
+                .collect::<Vec<_>>(),
+        )
     }
 }
 
@@ -31,15 +41,14 @@ impl FromStr for JunTehai {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use ParseError as E;
-        let hai_vec = HaiVec::from_str(s)?;
-
-        for hai in &hai_vec.0 {
-            match *hai {
-                HaiWithAttr::FromTehai(..) => {}
-                _ => return Err(E::InvalidHai(*hai)),
-            }
-        }
-
+        let hai_vec = HaiVec::from_str(s)?
+            .0
+            .into_iter()
+            .map(|hai| match hai {
+                HaiWithAttr::FromTehai(hai) => Ok(hai),
+                _ => Err(E::InvalidHai(hai)),
+            })
+            .collect::<Result<Vec<_>, _>>()?;
         Ok(Self(hai_vec))
     }
 }

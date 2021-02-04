@@ -57,7 +57,7 @@ impl FromStr for Tehai {
 
         let agari = AgariHai::from_str(chunks.next().ok_or(E::NoAgariHai)?)?;
 
-        let hai_count = jun_tehai.as_vec().0.len() + furo.len() * 3 + 1;
+        let hai_count = jun_tehai.as_vec().len() + furo.len() * 3 + 1;
         if hai_count != 14 {
             return Err(E::InvalidHaiCount(hai_count));
         }
