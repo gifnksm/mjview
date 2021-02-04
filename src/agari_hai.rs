@@ -16,7 +16,11 @@ impl fmt::Display for AgariHai {
 }
 
 #[derive(Debug, Error)]
-pub(crate) enum ParseError {
+#[error(transparent)]
+pub(crate) struct ParseError(#[from] ParseErrorKind);
+
+#[derive(Debug, Error)]
+enum ParseErrorKind {
     #[error("invalid hai found: `{0}`")]
     InvalidHai(HaiWithAttr),
     #[error("invalid number of hai: `{0}`")]
@@ -29,17 +33,17 @@ impl FromStr for AgariHai {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ParseError as E;
-        let hai_vec = HaiVec::from_str(s)?;
+        use ParseErrorKind as E;
+        let hai_vec = HaiVec::from_str(s).map_err(E::from)?;
 
         if hai_vec.0.len() != 1 {
-            return Err(E::InvalidNumberOfHai(hai_vec));
+            return Err(E::InvalidNumberOfHai(hai_vec).into());
         }
 
         let hai = hai_vec.0[0];
         match hai {
             HaiWithAttr::Agari(agari, hai) => Ok(Self { agari, hai }),
-            _ => Err(E::InvalidHai(hai)),
+            _ => Err(E::InvalidHai(hai).into()),
         }
     }
 }
@@ -51,12 +55,12 @@ mod test {
 
     #[test]
     fn parse() {
-        use ParseError::*;
+        use ParseErrorKind::*;
         fn ok(s: &str) -> String {
             AgariHai::from_str(s).unwrap().to_string()
         }
-        fn err(s: &str) -> ParseError {
-            AgariHai::from_str(s).unwrap_err()
+        fn err(s: &str) -> ParseErrorKind {
+            AgariHai::from_str(s).unwrap_err().0
         }
         macro_rules! h {
             ($expected:expr, $($expr:expr),*) => {

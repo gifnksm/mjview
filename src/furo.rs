@@ -86,7 +86,11 @@ impl Furo {
 }
 
 #[derive(Debug, Error)]
-pub(crate) enum ParseError {
+#[error(transparent)]
+pub(crate) struct ParseError(#[from] ParseErrorKind);
+
+#[derive(Debug, Error)]
+enum ParseErrorKind {
     #[error("multiple categories found: `{0}` and `{1}`")]
     MultipleCategories(HaiWithAttr, HaiWithAttr),
     #[error("multiple hai from tacha found: `{}` and `{}`", HaiWithAttr::FromTacha(*.0, *.1), HaiWithAttr::FromTacha(*.2, *.3))]
@@ -117,9 +121,9 @@ impl FromStr for Furo {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ParseError as E;
+        use ParseErrorKind as E;
 
-        let hai_vec = HaiVec::from_str(s)?;
+        let hai_vec = HaiVec::from_str(s).map_err(E::from)?;
 
         let mut all_hai = vec![];
         let mut from_tehai = vec![];
@@ -129,21 +133,21 @@ impl FromStr for Furo {
         for attr in &hai_vec.0 {
             all_hai.push(*attr.hai());
             if all_hai[0].category() != attr.hai().category() {
-                return Err(E::MultipleCategories(hai_vec.0[0], *attr));
+                return Err(E::MultipleCategories(hai_vec.0[0], *attr).into());
             }
             match *attr {
                 HaiWithAttr::FromTehai(hai) => from_tehai.push(hai),
                 HaiWithAttr::FromTacha(tacha, hai) => {
                     if let Some((old_tacha, old_hai)) = from_tacha.replace((tacha, hai)) {
-                        return Err(E::MultipleTacha(old_tacha, old_hai, tacha, hai));
+                        return Err(E::MultipleTacha(old_tacha, old_hai, tacha, hai).into());
                     }
                 }
                 HaiWithAttr::Kakan(hai) => {
                     if let Some(old_hai) = kakan.replace(hai) {
-                        return Err(E::MultipleKakan(old_hai, hai));
+                        return Err(E::MultipleKakan(old_hai, hai).into());
                     }
                 }
-                _ => return Err(E::InvalidHai(*attr)),
+                _ => return Err(E::InvalidHai(*attr).into()),
             }
         }
 
@@ -159,10 +163,10 @@ impl FromStr for Furo {
             {
                 let (tacha, from_tacha) = from_tacha.ok_or_else(|| E::MenzenChi(*h0, *h1, *h2))?;
                 if tacha != Tacha::Kamicha {
-                    return Err(E::ChiNotFromKamicha(tacha, from_tacha));
+                    return Err(E::ChiNotFromKamicha(tacha, from_tacha).into());
                 }
                 if let Some(hai) = kakan {
-                    return Err(E::ChiWithKakan(hai));
+                    return Err(E::ChiWithKakan(hai).into());
                 }
                 assert_eq!(from_tehai.len(), 2);
                 Furo::Chi {
@@ -174,7 +178,7 @@ impl FromStr for Furo {
             [h0, h1, h2] if h0.number() == h1.number() && h1.number() == h2.number() => {
                 let (tacha, from_tacha) = from_tacha.ok_or_else(|| E::MenzenPon(*h0, *h1, *h2))?;
                 if let Some(hai) = kakan {
-                    return Err(E::PonWithKakan(hai));
+                    return Err(E::PonWithKakan(hai).into());
                 }
                 assert_eq!(from_tehai.len(), 2);
                 Furo::Pon {
@@ -218,10 +222,10 @@ impl FromStr for Furo {
                             ],
                         }
                     }
-                    (None, Some(kakan)) => return Err(E::AnkanWithKakan(kakan)),
+                    (None, Some(kakan)) => return Err(E::AnkanWithKakan(kakan).into()),
                 }
             }
-            _ => return Err(E::InvalidCombination(hai_vec)),
+            _ => return Err(E::InvalidCombination(hai_vec).into()),
         };
         Ok(res)
     }
@@ -234,12 +238,12 @@ mod test {
 
     #[test]
     fn parse_furo() {
-        use ParseError::*;
+        use ParseErrorKind::*;
         fn ok(s: &str) -> String {
             Furo::from_str(s).unwrap().to_string()
         }
-        fn err(s: &str) -> ParseError {
-            Furo::from_str(s).unwrap_err()
+        fn err(s: &str) -> ParseErrorKind {
+            Furo::from_str(s).unwrap_err().0
         }
         macro_rules! h {
             ($expected:expr, $($expr:expr),*) => {

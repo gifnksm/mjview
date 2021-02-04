@@ -22,7 +22,11 @@ impl fmt::Display for Tehai {
 }
 
 #[derive(Debug, Error)]
-pub(crate) enum ParseError {
+#[error(transparent)]
+pub(crate) struct ParseError(#[from] ParseErrorKind);
+
+#[derive(Debug, Error)]
+enum ParseErrorKind {
     #[error("no jun-tehai found")]
     NoJunTehai,
     #[error("no agari-hai found")]
@@ -41,10 +45,11 @@ impl FromStr for Tehai {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ParseError as E;
+        use ParseErrorKind as E;
         let mut chunks = s.split_whitespace().peekable();
 
-        let jun_tehai = JunTehai::from_str(chunks.next().ok_or(E::NoJunTehai)?)?;
+        let tehai_chunk = chunks.next().ok_or(E::NoJunTehai)?;
+        let jun_tehai = JunTehai::from_str(tehai_chunk).map_err(E::from)?;
 
         let mut furo = vec![];
         while let Some(chunk) = chunks.peek() {
@@ -52,17 +57,18 @@ impl FromStr for Tehai {
                 break;
             }
             let chunk = chunks.next().unwrap();
-            furo.push(Furo::from_str(chunk)?);
+            furo.push(Furo::from_str(chunk).map_err(E::from)?);
         }
 
-        let agari = AgariHai::from_str(chunks.next().ok_or(E::NoAgariHai)?)?;
+        let agari_chunk = chunks.next().ok_or(E::NoAgariHai)?;
+        let agari = AgariHai::from_str(agari_chunk).map_err(E::from)?;
 
         let hai_count = jun_tehai.as_vec().len() + furo.len() * 3 + 1;
         if hai_count != 14 {
-            return Err(E::InvalidHaiCount(hai_count));
+            return Err(E::InvalidHaiCount(hai_count).into());
         }
 
-        Ok(Self {
+        Ok(Tehai {
             jun_tehai,
             furo,
             agari,

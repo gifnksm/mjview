@@ -29,7 +29,11 @@ impl JunTehai {
 }
 
 #[derive(Debug, Error)]
-pub(crate) enum ParseError {
+#[error(transparent)]
+pub(crate) struct ParseError(#[from] ParseErrorKind);
+
+#[derive(Debug, Error)]
+enum ParseErrorKind {
     #[error("invalid hai found: `{0}`")]
     InvalidHai(HaiWithAttr),
     #[error(transparent)]
@@ -40,15 +44,17 @@ impl FromStr for JunTehai {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ParseError as E;
-        let hai_vec = HaiVec::from_str(s)?
+        use ParseErrorKind as E;
+        let hai_vec = HaiVec::from_str(s)
+            .map_err(E::from)?
             .0
             .into_iter()
             .map(|hai| match hai {
                 HaiWithAttr::FromTehai(hai) => Ok(hai),
                 _ => Err(E::InvalidHai(hai)),
             })
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(E::from)?;
         Ok(Self(hai_vec))
     }
 }
@@ -60,12 +66,12 @@ mod test {
 
     #[test]
     fn parse() {
-        use ParseError::*;
+        use ParseErrorKind::*;
         fn ok(s: &str) -> String {
             JunTehai::from_str(s).unwrap().to_string()
         }
-        fn err(s: &str) -> ParseError {
-            JunTehai::from_str(s).unwrap_err()
+        fn err(s: &str) -> ParseErrorKind {
+            JunTehai::from_str(s).unwrap_err().0
         }
         macro_rules! h {
             ($expected:expr, $($expr:expr),*) => {

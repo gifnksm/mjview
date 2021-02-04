@@ -4,7 +4,7 @@ use thiserror::Error;
 
 /// 牌
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct Hai {
+pub struct Hai {
     category: HaiCategory,
     number: u8,
     akadora: bool,
@@ -17,7 +17,11 @@ impl fmt::Display for Hai {
 }
 
 #[derive(Debug, Error)]
-pub(crate) enum NewError {
+#[error(transparent)]
+pub(crate) struct NewError(#[from] NewErrorKind);
+
+#[derive(Debug, Error)]
+enum NewErrorKind {
     #[error("invalid hai: `{number}{category}`")]
     InvalidNumber { number: u8, category: HaiCategory },
     #[error("invalid akadora: `{number}${category}`")]
@@ -30,7 +34,7 @@ impl Hai {
         number: u8,
         akadora: bool,
     ) -> Result<Self, NewError> {
-        use {HaiCategory::*, NewError::*};
+        use {HaiCategory::*, NewErrorKind::*};
         let range = match category {
             Manzu => (1..=9), // 1-9
             Pinzu => (1..=9),
@@ -38,10 +42,10 @@ impl Hai {
             Jihai => (1..=7), // 1-7: 東南西北白發中
         };
         if !range.contains(&number) {
-            return Err(InvalidNumber { number, category });
+            return Err(InvalidNumber { number, category }.into());
         }
         if akadora && (number != 5 || category == Jihai) {
-            return Err(InvalidAkadora { number, category });
+            return Err(InvalidAkadora { number, category }.into());
         }
         Ok(Self {
             category,
@@ -86,8 +90,8 @@ mod test {
         }
         fn invalid_number(category: HaiCategory, number: u8, akadora: bool) {
             assert_matches!(
-                Hai::try_new(category, number, akadora).unwrap_err(),
-                NewError::InvalidNumber { number: n, category: c } if n == number && c == category
+                Hai::try_new(category, number, akadora).unwrap_err().0,
+                NewErrorKind::InvalidNumber { number: n, category: c } if n == number && c == category
             );
         }
         ok(Manzu, 8, false);

@@ -44,7 +44,11 @@ impl HaiVec {
 }
 
 #[derive(Debug, Error)]
-pub(crate) enum ParseError {
+#[error(transparent)]
+pub(crate) struct ParseError(#[from] ParseErrorKind);
+
+#[derive(Debug, Error)]
+enum ParseErrorKind {
     #[error("number not found")]
     NumberNotFound,
     #[error("category not found at last")]
@@ -65,7 +69,7 @@ impl FromStr for HaiVec {
     type Err = ParseError;
 
     fn from_str(mut s: &str) -> Result<Self, Self::Err> {
-        use ParseError::*;
+        use ParseErrorKind as E;
 
         let mut builders: Vec<Builder> = vec![];
         while !s.is_empty() {
@@ -74,15 +78,15 @@ impl FromStr for HaiVec {
             // prefix
             while let Some((prefix, rest)) = parse_prefix(s) {
                 if let Some(old_prefix) = builder.prefix.replace(prefix) {
-                    return Err(MultiplePrefix(old_prefix, prefix));
+                    return Err(E::MultiplePrefix(old_prefix, prefix).into());
                 }
                 s = rest;
             }
 
             // number
             let mut chars = s.chars();
-            let ch = chars.next().ok_or(NumberNotFound)?;
-            let number = ch.to_digit(10).ok_or(InvalidChar(ch))?;
+            let ch = chars.next().ok_or(E::NumberNotFound)?;
+            let number = ch.to_digit(10).ok_or(E::InvalidChar(ch))?;
             assert!(builder.number.is_none());
             builder.number.replace(number as u8);
             s = chars.as_str();
@@ -90,7 +94,7 @@ impl FromStr for HaiVec {
             // akadora
             while let Some(rest) = s.strip_prefix('$') {
                 if builder.akadora {
-                    return Err(MultipleDora);
+                    return Err(E::MultipleDora.into());
                 }
                 builder.akadora = true;
                 s = rest;
@@ -99,7 +103,7 @@ impl FromStr for HaiVec {
             // suffix
             while let Some((category, rest)) = parse_category(s) {
                 if let Some(old_category) = builder.category.replace(category) {
-                    return Err(MultipleCategory(old_category, category));
+                    return Err(E::MultipleCategory(old_category, category).into());
                 }
                 for b in builders.iter_mut().rev() {
                     match b.category {
@@ -146,10 +150,12 @@ struct Builder {
 impl Builder {
     fn build(self) -> Result<HaiWithAttr, ParseError> {
         use HaiWithAttr::*;
-        use ParseError::*;
+        use ParseErrorKind as E;
         let hai = match (self.number, self.category) {
-            (Some(number), Some(category)) => Hai::try_new(category, number, self.akadora)?,
-            _ => return Err(CategoryNotFound),
+            (Some(number), Some(category)) => {
+                Hai::try_new(category, number, self.akadora).map_err(E::from)?
+            }
+            _ => return Err(E::CategoryNotFound.into()),
         };
 
         let res = match self.prefix {
@@ -196,12 +202,12 @@ mod test {
 
     #[test]
     fn parse() {
-        use ParseError::*;
+        use ParseErrorKind::*;
         fn ok(s: &str) -> String {
             HaiVec::from_str(s).unwrap().to_string()
         }
-        fn err(s: &str) -> ParseError {
-            HaiVec::from_str(s).unwrap_err()
+        fn err(s: &str) -> ParseErrorKind {
+            HaiVec::from_str(s).unwrap_err().0
         }
         macro_rules! h {
             ($expected:expr, $($expr:expr),*) => {
