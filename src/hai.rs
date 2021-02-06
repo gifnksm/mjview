@@ -1,10 +1,12 @@
 use crate::hai_category::HaiCategory;
 use std::fmt;
 use thiserror::Error;
+use wasm_bindgen::prelude::*;
 
 /// 牌
+#[wasm_bindgen]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct Hai {
+pub struct Hai {
     category: HaiCategory,
     number: u8,
     akadora: bool,
@@ -67,6 +69,14 @@ impl Hai {
         } else {
             ""
         }
+    }
+}
+
+#[wasm_bindgen]
+impl Hai {
+    #[wasm_bindgen(js_name = "toString")]
+    pub fn to_string_js(&self) -> String {
+        self.to_string()
     }
 }
 

@@ -21,80 +21,56 @@
     </style>
   </head>
   <body>
-    <div class="tehai">
-      <style>
-        .tehai {
-          display: table-cell;
-          width: 500px;
-          height: 50px;
-          padding: 5px;
-          background-color: green;
-          color: white;
-          line-height: 1;
-        }
-        .jun-tehai,
-        .furo,
-        .tsumo,
-        .ron {
-          display: table-cell;
-          line-height: 50px;
-        }
-        .jun-tehai {
-          float: left;
-          margin-right: 5px;
-        }
-        .furo {
-          float: right;
-          margin-left: 5px;
-        }
-        .tsumo::before,
-        .ron::before {
-          display: inline-block;
-          width: 1em;
-          line-height: 1;
-          font-size: 15px;
-          text-align: center;
-          vertical-align: bottom;
-        }
-        .ron::before {
-          content: "ロン";
-        }
-        .tsumo::before {
-          content: "ツモ";
-        }
-        .stack {
-          display: inline-block;
-          line-height: 1;
-          text-align: center;
-          vertical-align: bottom;
-        }
-        .stack .stack-top,
-        .stack .stack-bottom {
-          display: table-row;
-        }
-      </style>
-      <div class="jun-tehai"><mj-hai hai="1m"></mj-hai></div>
-      <div class="furo">
-        <mj-hai hai="_"></mj-hai><mj-hai hai="9p"></mj-hai
-        ><mj-hai hai="9p"></mj-hai><mj-hai hai="_"></mj-hai>
-      </div>
-      <div class="furo">
-        <mj-hai hai="3s"></mj-hai
-        ><span class="stack"
-          ><span class="stack-top"><mj-hai hai="y_3s"></mj-hai></span
-          ><span class="stack-bottom"><mj-hai hai="y_3s"></mj-hai></span></span
-        ><mj-hai hai="3s"></mj-hai>
-      </div>
-      <div class="furo">
-        <mj-hai hai="4j"></mj-hai><mj-hai hai="4j"></mj-hai
-        ><mj-hai hai="4j"></mj-hai><mj-hai hai="y_4j"></mj-hai>
-      </div>
-      <div class="furo">
-        <mj-hai hai="_"></mj-hai><mj-hai hai="6m"></mj-hai
-        ><mj-hai hai="6m"></mj-hai><mj-hai hai="_"></mj-hai>
-      </div>
-      <div class="tsumo"><mj-hai hai="1m"></mj-hai></div>
-    </div>
+    <style>
+      .tehai {
+        display: table-cell;
+        width: 500px;
+        height: 50px;
+        padding: 5px;
+        background-color: green;
+        color: white;
+        line-height: 1;
+      }
+      .jun-tehai,
+      .furo,
+      .agari-hai {
+        display: table-cell;
+        line-height: 50px;
+      }
+      .jun-tehai {
+        float: left;
+        margin-right: 5px;
+      }
+      .furo {
+        float: right;
+        margin-left: 5px;
+      }
+      .agari-hai::before {
+        display: inline-block;
+        width: 1em;
+        line-height: 1;
+        font-size: 15px;
+        text-align: center;
+        vertical-align: bottom;
+      }
+      .ron::before {
+        content: "ロン";
+      }
+      .tsumo::before {
+        content: "ツモ";
+      }
+      .stack {
+        display: inline-block;
+        line-height: 1;
+        text-align: center;
+        vertical-align: bottom;
+      }
+      .stack .stack-top,
+      .stack .stack-bottom {
+        display: table-row;
+      }
+    </style>
+    <div class="tehai" id="tehai-view"></div>
     <form>
       <label>手牌: <input type="text" id="tehai" size="80" /></label>
       <button>OK</button>

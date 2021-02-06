@@ -60,6 +60,11 @@ impl AgariHai {
 
 #[wasm_bindgen]
 impl AgariHai {
+    #[wasm_bindgen(getter, js_name = "agari")]
+    pub fn agari_js(&self) -> String {
+        self.agari.to_str().into()
+    }
+
     #[wasm_bindgen(js_name = "toImage")]
     pub fn to_image_js(&self) -> HaiImage {
         self.to_image()
