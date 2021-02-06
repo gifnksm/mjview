@@ -25,6 +25,7 @@ names=(
     'hak:5j'
     'hat:6j'
     'chu:7j'
+    'ura:_'
 )
 
 for cat in m p s; do
@@ -36,5 +37,7 @@ done
 for pair in "${names[@]}"; do
     IFS=: read src_name dst_name <<< "${pair}"
     convert "${src_dir}/${src_name}.gif" -trim -strip "${dst_dir}/${dst_name}.png"
-    convert "${src_dir}/y_${src_name}.gif" -trim -strip "${dst_dir}/y_${dst_name}.png"
+    if [ -e "${src_dir}/y_${src_name}.gif" ]; then
+        convert "${src_dir}/y_${src_name}.gif" -trim -strip "${dst_dir}/y_${dst_name}.png"
+    fi
 done
