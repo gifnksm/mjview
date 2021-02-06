@@ -1,18 +1,13 @@
 import "./mahjong_hai";
 import "./mahjong_tehai";
 
-let mod, messageElem, tehaiViewElem;
+let messageElem, tehaiViewElem;
 
-Promise.all([
-  import("../pkg/index.js").then((wasm) => (mod = wasm)),
-  new Promise((resolve) => {
-    messageElem = document.getElementById("message");
-    tehaiViewElem = document.getElementById("tehai-view");
-    document.addEventListener("DOMContentLoaded", (_e) => resolve());
-  }),
-])
-  .then(main)
-  .catch(console.error);
+document.addEventListener("DOMContentLoaded", (_e) => {
+  messageElem = document.getElementById("message");
+  tehaiViewElem = document.getElementById("tehai-view");
+  main();
+});
 
 function main() {
   let form = document.forms[0];
