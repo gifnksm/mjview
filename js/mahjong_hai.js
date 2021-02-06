@@ -42,3 +42,23 @@ class MahjongHai extends HTMLElement {
 }
 
 customElements.define("mj-hai", MahjongHai);
+
+function preloadHai(hai) {
+  let link = document.createElement("link");
+  link.rel = "prefetch";
+  link.as = "image";
+  link.href = `image/paiga/${hai}.png`;
+  document.head.appendChild(link);
+}
+
+for (let cat of ["m", "p", "s"]) {
+  for (let i = 1; i <= 9; i++) {
+    preloadHai(`${i}${cat}`);
+    preloadHai(`y_${i}${cat}`);
+  }
+}
+for (let i = 1; i <= 7; i++) {
+  preloadHai(`${i}j`);
+  preloadHai(`y_${i}j`);
+}
+preloadHai("_");
