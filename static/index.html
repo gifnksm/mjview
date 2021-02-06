@@ -21,56 +21,7 @@
     </style>
   </head>
   <body>
-    <style>
-      .tehai {
-        display: table-cell;
-        width: 500px;
-        height: 50px;
-        padding: 5px;
-        background-color: green;
-        color: white;
-        line-height: 1;
-      }
-      .jun-tehai,
-      .furo,
-      .agari-hai {
-        display: table-cell;
-        line-height: 50px;
-      }
-      .jun-tehai {
-        float: left;
-        margin-right: 5px;
-      }
-      .furo {
-        float: right;
-        margin-left: 5px;
-      }
-      .agari-hai::before {
-        display: inline-block;
-        width: 1em;
-        line-height: 1;
-        font-size: 15px;
-        text-align: center;
-        vertical-align: bottom;
-      }
-      .ron::before {
-        content: "ロン";
-      }
-      .tsumo::before {
-        content: "ツモ";
-      }
-      .stack {
-        display: inline-block;
-        line-height: 1;
-        text-align: center;
-        vertical-align: bottom;
-      }
-      .stack .stack-top,
-      .stack .stack-bottom {
-        display: table-row;
-      }
-    </style>
-    <div class="tehai" id="tehai-view"></div>
+    <mj-tehai tehai="" id="tehai-view"></mj-tehai>
     <form>
       <label>手牌: <input type="text" id="tehai" size="80" /></label>
       <button>OK</button>
