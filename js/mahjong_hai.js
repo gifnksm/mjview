@@ -12,6 +12,7 @@ class MahjongHai extends HTMLElement {
     let shadow = this.attachShadow({ mode: "open" });
     let img = document.createElement("img");
     img.style.marginRight = "1px";
+    img.style.verticalAlign = "bottom";
     shadow.appendChild(img);
 
     this.update();
