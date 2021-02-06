@@ -35,6 +35,6 @@ done
 
 for pair in "${names[@]}"; do
     IFS=: read src_name dst_name <<< "${pair}"
-    convert "${src_dir}/${src_name}.gif" -trim "${dst_dir}/${dst_name}.png"
-    convert "${src_dir}/y_${src_name}.gif" -trim "${dst_dir}/y_${dst_name}.png"
+    convert "${src_dir}/${src_name}.gif" -trim -strip "${dst_dir}/${dst_name}.png"
+    convert "${src_dir}/y_${src_name}.gif" -trim -strip "${dst_dir}/y_${dst_name}.png"
 done
