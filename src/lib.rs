@@ -10,6 +10,7 @@ mod hai_image;
 mod hai_vec;
 mod hai_with_attr;
 mod jun_tehai;
+mod mentsu;
 mod tacha;
 mod tehai;
 

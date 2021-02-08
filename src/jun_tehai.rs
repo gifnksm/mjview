@@ -15,7 +15,7 @@ impl fmt::Display for JunTehai {
 }
 
 impl JunTehai {
-    pub(crate) fn as_vec(&self) -> &[Hai] {
+    pub(crate) fn as_slice(&self) -> &[Hai] {
         &self.0
     }
 

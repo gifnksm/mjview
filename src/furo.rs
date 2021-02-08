@@ -1,6 +1,6 @@
 use crate::{
     hai::Hai, hai_category::HaiCategory, hai_image::HaiImage, hai_vec::HaiVec,
-    hai_with_attr::HaiWithAttr, tacha::Tacha,
+    hai_with_attr::HaiWithAttr, mentsu::Mentsu, tacha::Tacha,
 };
 use std::{fmt, str::FromStr};
 use thiserror::Error;
@@ -299,6 +299,53 @@ impl FromStr for Furo {
             _ => return Err(E::InvalidCombination(hai_vec).into()),
         };
         Ok(Furo(res))
+    }
+}
+
+impl From<Furo> for Mentsu {
+    fn from(furo: Furo) -> Self {
+        match furo.0 {
+            FuroKind::Chi {
+                from_tehai: [te0, te1],
+                from_kamicha: ka,
+            } => {
+                let mut v = [te0, te1, ka];
+                v.sort();
+                Mentsu::shuntsu(v)
+            }
+            FuroKind::Pon {
+                from_tehai: [te0, te1],
+                from_tacha: ta,
+                tacha: _,
+            } => {
+                let mut v = [te0, te1, ta];
+                v.sort();
+                Mentsu::kotsu(v)
+            }
+            FuroKind::Kakan {
+                from_tehai: [te0, te1],
+                from_tacha: ta,
+                tacha: _,
+                added: a,
+            } => {
+                let mut v = [te0, te1, ta, a];
+                v.sort();
+                Mentsu::kantsu(v)
+            }
+            FuroKind::Daiminkan {
+                from_tehai: [te0, te1, te2],
+                from_tacha: ta,
+                tacha: _,
+            } => {
+                let mut v = [te0, te1, te2, ta];
+                v.sort();
+                Mentsu::kantsu(v)
+            }
+            FuroKind::Ankan { from_tehai: mut v } => {
+                v.sort();
+                Mentsu::kantsu(v)
+            }
+        }
     }
 }
 
