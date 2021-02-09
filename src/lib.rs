@@ -13,6 +13,7 @@ mod jun_tehai;
 mod mentsu;
 mod tacha;
 mod tehai;
+mod toitsu_candidates;
 
 // When the `wee_alloc` feature is enabled, this uses `wee_alloc` as the global
 // allocator.
