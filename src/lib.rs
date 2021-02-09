@@ -12,6 +12,7 @@ mod hai_with_attr;
 mod jun_tehai;
 mod kotsu_candidates;
 mod mentsu;
+mod mentsu_combinations;
 mod shuntsu_candidates;
 mod tacha;
 mod tehai;
