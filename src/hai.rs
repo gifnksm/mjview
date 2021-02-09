@@ -67,6 +67,10 @@ impl Hai {
         self.category == other.category && self.number == other.number
     }
 
+    pub(crate) fn is_next_to(&self, other: &Hai) -> bool {
+        self.category == other.category && self.number == other.number + 1
+    }
+
     pub(crate) fn to_dora_str(&self) -> &'static str {
         if self.akadora {
             "$"
