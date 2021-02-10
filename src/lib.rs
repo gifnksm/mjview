@@ -10,8 +10,13 @@ mod hai_image;
 mod hai_vec;
 mod hai_with_attr;
 mod jun_tehai;
+mod kotsu_candidates;
+mod mentsu;
+mod mentsu_combinations;
+mod shuntsu_candidates;
 mod tacha;
 mod tehai;
+mod toitsu_candidates;
 
 // When the `wee_alloc` feature is enabled, this uses `wee_alloc` as the global
 // allocator.

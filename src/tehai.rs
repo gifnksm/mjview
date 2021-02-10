@@ -1,4 +1,8 @@
-use crate::{agari::Agari, agari_hai::AgariHai, furo::Furo, jun_tehai::JunTehai};
+use crate::{
+    agari::Agari, agari_hai::AgariHai, furo::Furo, jun_tehai::JunTehai, mentsu::Mentsu,
+    mentsu_combinations,
+};
+use js_sys::Array;
 use std::{fmt, str::FromStr};
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
@@ -23,6 +27,15 @@ impl fmt::Display for Tehai {
     }
 }
 
+impl Tehai {
+    fn to_mentsu_combinations(&self) -> Vec<Vec<(Mentsu, u16)>> {
+        let mut tehai = Vec::from(self.jun_tehai.as_slice());
+        tehai.push(self.agari.hai());
+        tehai.sort();
+        mentsu_combinations::combinations(&tehai)
+    }
+}
+
 #[wasm_bindgen]
 impl Tehai {
     #[wasm_bindgen(js_name = "toString")]
@@ -43,6 +56,20 @@ impl Tehai {
     #[wasm_bindgen(getter, js_name = "agari")]
     pub fn agari_js(&self) -> AgariHai {
         self.agari
+    }
+
+    #[wasm_bindgen(js_name = "toMentsuCombinations")]
+    pub fn to_mentsu_combinations_js(&self) -> Array {
+        self.to_mentsu_combinations()
+            .into_iter()
+            .map(|comb| {
+                comb.into_iter()
+                    .map(|(mentsu, _bits)| mentsu)
+                    .map(JsValue::from)
+                    .collect::<Array>()
+            })
+            .map(JsValue::from)
+            .collect::<Array>()
     }
 }
 
@@ -88,7 +115,7 @@ impl FromStr for Tehai {
         let agari_chunk = chunks.next().ok_or(E::NoAgariHai)?;
         let agari = AgariHai::from_str(agari_chunk).map_err(E::from)?;
 
-        let hai_count = jun_tehai.as_vec().len() + furo.len() * 3 + 1;
+        let hai_count = jun_tehai.as_slice().len() + furo.len() * 3 + 1;
         if hai_count != 14 {
             return Err(E::InvalidHaiCount(hai_count).into());
         }

@@ -19,6 +19,12 @@ impl fmt::Display for AgariHai {
     }
 }
 
+impl AgariHai {
+    pub(crate) fn hai(&self) -> Hai {
+        self.hai
+    }
+}
+
 #[derive(Debug, Error)]
 #[error(transparent)]
 pub struct ParseError(#[from] ParseErrorKind);
