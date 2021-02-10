@@ -1,8 +1,10 @@
 use crate::{hai::Hai, hai_vec::HaiVec, hai_with_attr::HaiWithAttr};
 use std::fmt;
+use wasm_bindgen::prelude::*;
 
+#[wasm_bindgen]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct Mentsu(MentsuKind);
+pub struct Mentsu(MentsuKind);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum MentsuKind {
@@ -44,6 +46,14 @@ impl Mentsu {
             MentsuKind::Kantsu([h0, h1, h2, h3]) => HaiVec::new([t(h0), t(h1), t(h2), t(h3)]),
             MentsuKind::Toitsu([h0, h1]) => HaiVec::new([t(h0), t(h1)]),
         }
+    }
+}
+
+#[wasm_bindgen]
+impl Mentsu {
+    #[wasm_bindgen(js_name = "toString")]
+    pub fn to_string_js(&self) -> String {
+        self.to_string()
     }
 }
 
