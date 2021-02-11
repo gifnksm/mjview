@@ -3,178 +3,218 @@
   <head>
     <meta charset="UTF-8" />
     <title>Mahjong Tehai Viewer</title>
-    <style>
-      code {
-        background: #f5f5f5;
-        padding: 3px;
-      }
-      #message {
-        color: red;
-        font-family: monospace;
-      }
-      dfn {
-        text-decoration: underline dashed black;
-      }
-      :target {
-        color: red;
-      }
-    </style>
+    <link rel="stylesheet" href="/css/index.css" />
   </head>
   <body>
-    <mj-tehai tehai="" id="tehai-view"></mj-tehai>
-    <form>
-      <label>手牌: <input type="text" id="tehai" size="80" /></label>
-      <button>OK</button>
-      <div id="message"></div>
-    </form>
-    <section>
-      <h1>手牌の記法</h1>
-      <p>
-        <dfn id="dfn-tehai">手牌</dfn>は、1個の<a href="#dfn-jun-tehai"
-          >純手牌</a
-        >、0個以上の<a href="#dfn-furo">副露</a>、1個の<a href="#dfn-agari-hai"
-          >あがり牌</a
-        >から構成されます。テキストでは以下のように表現されます。
-      </p>
+    <main>
+      <mj-tehai tehai="" id="tehai-view"></mj-tehai>
+      <form>
+        <label>手牌: <input type="text" id="tehai" size="80" /></label>
+        <button>OK</button>
+        <div id="message"></div>
+      </form>
+      <section>
+        <h1>手牌の記法</h1>
+        <p>
+          <dfn id="dfn-tehai">手牌</dfn>は、1個の<a href="#dfn-jun-tehai"
+            >純手牌</a
+          >、0個以上の<a href="#dfn-furo">副露</a>、1個の<a
+            href="#dfn-agari-hai"
+            >あがり牌</a
+          >から構成されます。テキストでは以下のように表現されます。
+        </p>
 
-      <div>
-        <code>&lt;純手牌&gt</code>[ <code>&lt;副露&gt;</code>...]
-        <code>&lt;あがり牌&gt;</code>
-      </div>
+        <div class="code">
+          <code
+            ><var>&lt;純手牌&gt</var>[ <var>&lt;副露&gt;</var>...]
+            <var>&lt;あがり牌&gt;</var></code
+          >
+        </div>
 
-      <p>各構成要素の間は1つ以上の空白文字で区切ります。</p>
+        <p>各構成要素の間は1つ以上の空白文字で区切ります。</p>
 
-      <section>
-        <h2>単独の牌</h2>
-        <p>
-          <dfn id="#dfn-tandoku">単独の牌</dfn
-          >は、牌の種類を表すアルファベットと数字の組み合わせで表現します。
-        </p>
-        <dl>
-          <dt>萬子 (<code>m</code>):</dt>
-          <dd>
-            <code><var>&lt;n&gt;</var>m</code> (一萬🀇: <code>1m</code>, 二萬🀈:
-            <code>2m</code>, ..., 九萬🀏: <code>9m</code>)
-          </dd>
-          <dt>筒子 (<code>p</code>):</dt>
-          <dd>
-            <code><var>&lt;n&gt;</var>p</code> (一筒🀙: <code>1p</code>, 二筒🀚:
-            <code>2p</code>, ..., 九筒🀡: <code>9p</code>)
-          </dd>
-          <dt>索子 (<code>s</code>):</dt>
-          <dd>
-            <code><var>&lt;n&gt;</var>s</code> (一索🀐: <code>1s</code>, 二索🀑:
-            <code>2s</code>, ..., 九索🀘: <code>9s</code>)
-          </dd>
-          <dt>字牌 (<code>j</code>):</dt>
-          <dd>
-            <code><var>&lt;n&gt;</var>j</code> (東🀀: <code>1j</code>, 南🀁:
-            <code>2j</code>, 西🀂: <code>3j</code>, 北🀃: <code>4j</code>, 白🀆:
-            <code>5j</code>, 發🀅: <code>6j</code>, 中🀄: <code>7j</code>)
-          </dd>
-        </dl>
-        <p>
-          赤ドラは数字の後に <code>$</code> をつけます (<code>5$m</code>,
-          <code>5$s</code>, <code>5$p</code>)。
-        </p>
-      </section>
+        <section>
+          <h2>単独の牌</h2>
+          <p>
+            <dfn id="#dfn-tandoku">単独の牌</dfn
+            >は、牌の種類を表すアルファベットと数字の組み合わせで表現します。
+          </p>
+          <dl>
+            <dt>萬子</dt>
+            <dd>
+              <mj-hai hai="1m"></mj-hai>, <mj-hai hai="2m"></mj-hai>,
+              <mj-hai hai="3m"></mj-hai>, <mj-hai hai="4m"></mj-hai>,
+              <mj-hai hai="5m"></mj-hai>, <mj-hai hai="6m"></mj-hai>,
+              <mj-hai hai="7m"></mj-hai>, <mj-hai hai="8m"></mj-hai>,
+              <mj-hai hai="9m"></mj-hai>
+            </dd>
+            <dd>
+              <code>1m</code>, <code>2m</code>, <code>3m</code>,
+              <code>4m</code>, <code>5m</code>, <code>6m</code>,
+              <code>7m</code>, <code>8m</code>, <code>9m</code>
+            </dd>
+            <dt>索子</dt>
+            <dd>
+              <mj-hai hai="1s"></mj-hai>, <mj-hai hai="2s"></mj-hai>,
+              <mj-hai hai="3s"></mj-hai>, <mj-hai hai="4s"></mj-hai>,
+              <mj-hai hai="5s"></mj-hai>, <mj-hai hai="6s"></mj-hai>,
+              <mj-hai hai="7s"></mj-hai>, <mj-hai hai="8s"></mj-hai>,
+              <mj-hai hai="9s"></mj-hai>
+            </dd>
+            <dd>
+              <code>1s</code>, <code>2s</code>, <code>3s</code>,
+              <code>4s</code>, <code>5s</code>, <code>6s</code>,
+              <code>7s</code>, <code>8s</code>, <code>9s</code>
+            </dd>
+            <dt>筒子</dt>
+            <dd>
+              <mj-hai hai="1p"></mj-hai>, <mj-hai hai="2p"></mj-hai>,
+              <mj-hai hai="3p"></mj-hai>, <mj-hai hai="4p"></mj-hai>,
+              <mj-hai hai="5p"></mj-hai>, <mj-hai hai="6p"></mj-hai>,
+              <mj-hai hai="7p"></mj-hai>, <mj-hai hai="8p"></mj-hai>,
+              <mj-hai hai="9p"></mj-hai>
+            </dd>
+            <dd>
+              <code>1p</code>, <code>2p</code>, <code>3p</code>,
+              <code>4p</code>, <code>5p</code>, <code>6p</code>,
+              <code>7p</code>, <code>8p</code>, <code>9p</code>
+            </dd>
+            <dt>字牌</dt>
+            <dd>
+              <mj-hai hai="1j"></mj-hai>, <mj-hai hai="2j"></mj-hai>,
+              <mj-hai hai="3j"></mj-hai>, <mj-hai hai="4j"></mj-hai>,
+              <mj-hai hai="5j"></mj-hai>, <mj-hai hai="6j"></mj-hai>,
+              <mj-hai hai="7j"></mj-hai>
+            </dd>
+            <dd>
+              <code>1j</code>, <code>2j</code>, <code>3j</code>,
+              <code>4j</code>, <code>5j</code>, <code>6j</code>,
+              <code>7j</code>
+            </dd>
+          </dl>
+          <p>
+            赤ドラは数字の後に <code>$</code> をつけます (<mj-hai
+              hai="5$m"
+            ></mj-hai
+            >: <code>5$m</code>, <mj-hai hai="5$s"></mj-hai>: <code>5$s</code>,
+            <mj-hai hai="5$p"></mj-hai>: <code>5$p</code>)。
+          </p>
+        </section>
 
-      <section>
-        <h2>連続する牌</h2>
-        <p>
-          <dfn id="dfn-renzoku">連続する牌</dfn
-          >は、牌の種類に対応する文字列を並べて記述することで表現します。
-          同じ種類の牌が連続する場合、種類を表す文字を省略することができます。
-          例えば <code>1p2p3p4s5s6s</code> という牌の並びは、
-          <code>123p456s</code> とも表現できます。
-          各文字列の間に空白文字などを含めることはできません。
-        </p>
-      </section>
+        <section>
+          <h2>連続する牌</h2>
+          <p>
+            <dfn id="dfn-renzoku">連続する牌</dfn
+            >は、牌の種類に対応する文字列を並べて記述することで表現します。
+            同じ種類の牌が連続する場合、種類を表す文字を省略することができます。
+            例えば <code>1p2p3p4s5s6s</code> という牌の並びは、
+            <code>123p456s</code> とも表現できます。
+            各文字列の間に空白文字などを含めることはできません。
+          </p>
+        </section>
 
-      <section>
-        <h2>純手牌</h2>
-        <p>
-          <dfn id="dfn-jun-tehai">純手牌</dfn>は、<a href="#dfn-renzoku"
-            >連続する牌</a
-          >と同様の記法で表現します。 特別な記法はありません。
-        </p>
-      </section>
+        <section>
+          <h2>純手牌</h2>
+          <p>
+            <dfn id="dfn-jun-tehai">純手牌</dfn>は、<a href="#dfn-renzoku"
+              >連続する牌</a
+            >と同様の記法で表現します。 特別な記法はありません。
+          </p>
+        </section>
 
-      <section>
-        <h2>副露</h2>
-        <p>
-          <dfn id="dfn-furo">副露</dfn>は、<a href="#dfn-furo-tsumo"
-            >ツモにより取得した牌</a
-          >、<a href="#dfn-furo-jun-tehai">元々純手牌に含まれていた牌</a>、<a
-            href="#dfn-furo-from-tacha"
-            >他家から取得した牌</a
-          >、<a href="#dfn-furo-kakan">加槓で追加した牌</a
-          >の組み合わせにより表現されます。
-        </p>
-        <p>
-          <dfn id="dfn-furo-tsumo">ツモにより取得した牌</dfn>および<dfn
-            id="dfn-furo-jun-tehai"
-            >元々純手牌に含まれていた牌</dfn
-          >は<a href="#dfn-renzoku">連続する牌</a>と同様の記法で表現します。
-        </p>
-        <p>
-          <dfn id="dfn-furo-from-tacha">他家から取得した牌</dfn>
-          は、他家の種類に対応する記号を牌の数字の前に付与することで表現します。
-        </p>
-        <ul>
-          <li>上家: <code>&lt;</code></li>
-          <li>対面: <code>^</code></li>
-          <li>下家: <code>&gt;</code></li>
-        </ul>
-        <p>
-          <dfn id="dfn-furo-kakan">加槓で追加した牌</dfn
-          >は、<code>+</code>を牌の数字の前に付与します。
-        </p>
-        <p>副露の例を以下に示します。</p>
-        <ul>
-          <li>チー: <code>&lt;213p</code></li>
-          <li>対面からのポン: <code>^111j</code></li>
-          <li>下家からのポン後、加槓: <code>&gt;333+3p</code></li>
-          <li>上家からの大明槓: <code>&lt;8888s</code></li>
-          <li>暗槓: <code>1111j</code></li>
-        </ul>
+        <section>
+          <h2>副露</h2>
+          <p>
+            <dfn id="dfn-furo">副露</dfn>は、<a href="#dfn-furo-tsumo"
+              >ツモにより取得した牌</a
+            >、<a href="#dfn-furo-jun-tehai">元々純手牌に含まれていた牌</a>、<a
+              href="#dfn-furo-from-tacha"
+              >他家から取得した牌</a
+            >、<a href="#dfn-furo-kakan">加槓で追加した牌</a
+            >の組み合わせにより表現されます。
+          </p>
+          <p>
+            <dfn id="dfn-furo-tsumo">ツモにより取得した牌</dfn>および<dfn
+              id="dfn-furo-jun-tehai"
+              >元々純手牌に含まれていた牌</dfn
+            >は<a href="#dfn-renzoku">連続する牌</a>と同様の記法で表現します。
+          </p>
+          <p>
+            <dfn id="dfn-furo-from-tacha">他家から取得した牌</dfn
+            >は、他家の種類に対応する記号を牌の数字の前に付与することで表現します。
+          </p>
+          <ul>
+            <li>上家: <code>&lt;</code></li>
+            <li>対面: <code>^</code></li>
+            <li>下家: <code>&gt;</code></li>
+          </ul>
+          <p>
+            <dfn id="dfn-furo-kakan">加槓で追加した牌</dfn
+            >は、<code>+</code>を牌の数字の前に付与します。
+          </p>
+          <p>副露の例を以下に示します。</p>
+          <dl>
+            <dt>チー</dt>
+            <dd><mj-furo furo="&lt;213p"></mj-furo></dd>
+            <dd><code>&lt;213p</code></dd>
+            <dt>対面からのポン</dt>
+            <dd><mj-furo furo="^111j"></mj-furo></dd>
+            <dd><code>^111j</code></dd>
+            <dt>下家からのポン後、加槓</dt>
+            <dd><mj-furo furo="&gt;555+5$p"></mj-furo></dd>
+            <dd><code>&gt;555+5$p</code></dd>
+            <dt>上家からの大明槓</dt>
+            <dd><mj-furo furo="&lt;8888s"></mj-furo></dd>
+            <dd><code>&lt;8888s</code></dd>
+            <dt>暗槓</dt>
+            <dd><mj-furo furo="1111j"></mj-furo></dd>
+            <dd><code>1111j</code></dd>
+          </dl>
+        </section>
+        <section>
+          <h2>あがり牌</h2>
+          <p>
+            <dfn id="dfn-agari-hai">あがり牌</dfn
+            >は、牌の前にツモまたはロンに対応する記号を牌の数字の前に付与することで表現します。
+          </p>
+          <ul>
+            <li>ツモ: <code>!</code></li>
+            <li>ロン: <code>?</code></li>
+          </ul>
+        </section>
+        <section>
+          <h2>記述例</h2>
+          <dl>
+            <dt>国士無双</dt>
+            <dd><mj-tehai tehai="19m19p19s1234567j !1j"></mj-tehai></dd>
+            <dd><code>19m19p19s1234567j !1j</code></dd>
+            <dt>四槓子</dt>
+            <dd>
+              <mj-tehai tehai="1m 9999p ^333+3s &gt;4444j 6666m !1m"></mj-tehai>
+            </dd>
+            <dd><code>1m 9999p ^333+3s &gt;4444j 6666m !1m</code></dd>
+            <dt>三色同巡</dt>
+            <dd><mj-tehai tehai="12344m123p33j &lt;213p ?3j"></mj-tehai></dd>
+            <dd><code>12344m123p33j &lt;213p ?3j</code></dd>
+          </dl>
+        </section>
+        <section>
+          <h2>記号の由来</h2>
+          <p>本記法で利用されている記号の由来は以下の通りです。</p>
+          <ul>
+            <li>赤ドラ <code>$</code>: dollar からの連想</li>
+            <li>上家 <code>&lt;</code>: 上家は自家の左側にいることから</li>
+            <li>
+              対面 <code>^</code>: 対面は自家の向かい側 (前) にいることから
+            </li>
+            <li>下家 <code>&gt;</code>: 下家は自家の右側にいることをから</li>
+            <li>加槓 <code>+</code>: ポンに牌をひとつ加えることから</li>
+            <li>ツモ <code>!</code>: ツモると皆びっくりすることから</li>
+            <li>ロン <code>?</code>: 心の中で他家に牌をねだることから</li>
+          </ul>
+        </section>
       </section>
-      <section>
-        <h2>あがり牌</h2>
-        <p>
-          <dfn id="dfn-agari-hai">あがり牌</dfn
-          >は、牌の前にツモまたはロンに対応する記号を牌の数字の前に付与することで表現します。
-        </p>
-        <ul>
-          <li>ツモ: <code>!</code></li>
-          <li>ロン: <code>?</code></li>
-        </ul>
-      </section>
-      <section>
-        <h2>記述例</h2>
-        <dl>
-          <dt>国士無双:</dt>
-          <dd><code>19m19p19s1234567j !1j</code></dd>
-          <dt>四槓子</dt>
-          <dd><code>1m 9999p ^333+3s &gt;4444j 6666m !1m</code></dd>
-          <dt>三色同巡</dt>
-          <dd><code>12344m123p33j &lt;213p ?3j</code></dd>
-        </dl>
-      </section>
-      <section>
-        <h2>記号の由来</h2>
-        <p>本記法で利用されている記号の由来は以下の通りです。</p>
-        <ul>
-          <li>赤ドラ <code>$</code>: dollar からの連想</li>
-          <li>上家 <code>&lt;</code>: 上家は自家の左側にいることから</li>
-          <li>対面 <code>^</code>: 対面は自家の向かい側 (前) にいることから</li>
-          <li>下家 <code>&gt;</code>: 下家は自家の右側にいることをから</li>
-          <li>加槓 <code>+</code>: ポンに牌をひとつ加えることから</li>
-          <li>ツモ <code>!</code>: ツモると皆びっくりすることから</li>
-          <li>ロン <code>?</code>: 心の中で他家に牌をねだることから</li>
-        </ul>
-      </section>
-    </section>
+    </main>
     <script type="module" src="index.js"></script>
   </body>
 </html>
