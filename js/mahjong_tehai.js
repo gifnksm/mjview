@@ -46,8 +46,8 @@ class MahjongTehai extends HTMLElement {
 
     let res;
     try {
-      let mod = await import("../pkg/index.js");
-      res = mod.parse_tehai(tehai);
+      let { Tehai } = await import("../pkg/index.js");
+      res = Tehai.fromStr(tehai);
     } catch (e) {
       elem.textContent = e;
       return;

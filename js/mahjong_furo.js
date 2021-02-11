@@ -46,8 +46,8 @@ class MahjongFuro extends HTMLElement {
 
     let res;
     try {
-      let mod = await import("../pkg/index.js");
-      res = mod.parse_furo(furo);
+      let { Furo } = await import("../pkg/index.js");
+      res = Furo.fromStr(furo);
     } catch (e) {
       elem.textContent = e;
       return;

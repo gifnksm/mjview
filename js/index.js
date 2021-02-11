@@ -18,8 +18,8 @@ async function onSubmit(e, form) {
   let res;
   try {
     tehaiViewElem.tehai = tehai;
-    let mod = await import("../pkg/index.js");
-    res = mod.parse_tehai(tehai);
+    let { Tehai } = await import("../pkg/index.js");
+    res = Tehai.fromStr(tehai);
   } catch (e) {
     messageElem.textContent = e;
   }

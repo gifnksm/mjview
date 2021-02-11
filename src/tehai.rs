@@ -71,6 +71,12 @@ impl Tehai {
             .map(JsValue::from)
             .collect::<Array>()
     }
+
+    #[wasm_bindgen(js_name = "fromStr")]
+    pub fn from_str_js(s: &str) -> Result<Tehai, JsValue> {
+        let res = Self::from_str(s).map_err(|e| e.to_string())?;
+        Ok(res)
+    }
 }
 
 #[derive(Debug, Error)]

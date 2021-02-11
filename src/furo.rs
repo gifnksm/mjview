@@ -154,6 +154,12 @@ impl Furo {
     pub fn to_image_js(&self) -> Box<[JsValue]> {
         self.to_image().into_iter().map(JsValue::from).collect()
     }
+
+    #[wasm_bindgen(js_name = "fromStr")]
+    pub fn from_str_js(s: &str) -> Result<Furo, JsValue> {
+        let res = Self::from_str(s).map_err(|e| e.to_string())?;
+        Ok(res)
+    }
 }
 
 #[derive(Debug, Error)]
