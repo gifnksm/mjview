@@ -1,5 +1,6 @@
 import "./mahjong_hai";
 import "./mahjong_tehai";
+import "./mahjong_furo";
 
 let messageElem, tehaiViewElem;
 

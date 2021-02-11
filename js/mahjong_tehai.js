@@ -1,3 +1,5 @@
+import "./mahjong_hai";
+
 class MahjongTehai extends HTMLElement {
   static get observedAttributes() {
     return ["tehai"];
@@ -8,7 +10,7 @@ class MahjongTehai extends HTMLElement {
 
     let shadow = this.attachShadow({ mode: "open" });
     let style = document.createElement("style");
-    style.textContent = STYLE;
+    style.textContent = TEHAI_STYLE;
     let div = document.createElement("div");
     div.classList.add("tehai");
     shadow.appendChild(style);
@@ -40,6 +42,7 @@ class MahjongTehai extends HTMLElement {
       elem.textContent = "";
       return;
     }
+    elem.textContent = "loading...";
 
     let res;
     try {
@@ -59,11 +62,8 @@ class MahjongTehai extends HTMLElement {
     elem.appendChild(junTehaiElem);
 
     for (let furo of res.furo) {
-      let furoElem = document.createElement("div");
-      furoElem.classList.add("furo");
-      for (let hai of furo.toImage()) {
-        furoElem.appendChild(haiImage(hai));
-      }
+      let furoElem = document.createElement("mj-furo");
+      furoElem.furo = furo;
       elem.appendChild(furoElem);
     }
 
@@ -112,27 +112,27 @@ function haiImage(hai) {
   }
 }
 
-const STYLE = `
+const TEHAI_STYLE = `
 .tehai {
   display: table-cell;
   width: 500px;
-  height: 50px;
+  height: 44px;
   padding: 5px;
   background-color: green;
   color: white;
   line-height: 1;
 }
+mj-furo,
 .jun-tehai,
-.furo,
 .agari-hai {
   display: table-cell;
-  line-height: 50px;
+  line-height: 44px;
 }
 .jun-tehai {
   float: left;
   margin-right: 5px;
 }
-.furo {
+mj-furo {
   float: right;
   margin-left: 5px;
 }
@@ -144,21 +144,14 @@ const STYLE = `
   text-align: center;
   vertical-align: bottom;
 }
+.agari-hai {
+  margin-right: 20px;
+}
 .ron::before {
   content: "ロン";
 }
 .tsumo::before {
   content: "ツモ";
-}
-.stack {
-  display: inline-block;
-  line-height: 1;
-  text-align: center;
-  vertical-align: bottom;
-}
-.stack .stack-top,
-.stack .stack-bottom {
-  display: table-row;
 }
 `;
 

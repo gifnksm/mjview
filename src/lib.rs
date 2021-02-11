@@ -1,4 +1,5 @@
-use crate::tehai::Tehai;
+use crate::{furo::Furo, tehai::Tehai};
+use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
 mod agari;
@@ -39,9 +40,14 @@ pub fn main_js() -> Result<(), JsValue> {
 
 #[wasm_bindgen]
 pub fn parse_tehai(s: &str) -> Result<Tehai, JsValue> {
-    use std::str::FromStr;
-    match Tehai::from_str(s) {
-        Ok(res) => Ok(res),
-        Err(e) => Err(JsValue::from(e.to_string())),
-    }
+    Tehai::from_str(s)
+        .map_err(|e| e.to_string())
+        .map_err(JsValue::from)
+}
+
+#[wasm_bindgen]
+pub fn parse_furo(s: &str) -> Result<Furo, JsValue> {
+    Furo::from_str(s)
+        .map_err(|e| e.to_string())
+        .map_err(JsValue::from)
 }

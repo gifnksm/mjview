@@ -13,6 +13,7 @@ class MahjongHai extends HTMLElement {
     let img = document.createElement("img");
     img.style.marginRight = "1px";
     img.style.verticalAlign = "bottom";
+    img.style.color = "red";
     shadow.appendChild(img);
 
     this.update();
@@ -38,27 +39,29 @@ class MahjongHai extends HTMLElement {
 
     let hai = this.getAttribute("hai");
     imgElem.src = `image/paiga/${hai}.png`;
+    imgElem.alt = hai;
+    imgElem.title = hai;
   }
 }
 
 customElements.define("mj-hai", MahjongHai);
 
-function preloadHai(hai) {
+function prefetchHai(hai) {
   let link = document.createElement("link");
   link.rel = "prefetch";
   link.as = "image";
-  link.href = `image/paiga/${hai}.png`;
+  link.href = `/image/paiga/${hai}.png`;
   document.head.appendChild(link);
 }
 
 for (let cat of ["m", "p", "s"]) {
   for (let i = 1; i <= 9; i++) {
-    preloadHai(`${i}${cat}`);
-    preloadHai(`y_${i}${cat}`);
+    prefetchHai(`${i}${cat}`);
+    prefetchHai(`y_${i}${cat}`);
   }
 }
 for (let i = 1; i <= 7; i++) {
-  preloadHai(`${i}j`);
-  preloadHai(`y_${i}j`);
+  prefetchHai(`${i}j`);
+  prefetchHai(`y_${i}j`);
 }
-preloadHai("_");
+prefetchHai("_");
