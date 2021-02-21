@@ -1,4 +1,4 @@
-use crate::{agari::Agari, hai::Hai, tacha::Tacha};
+use crate::{agari_type::AgariType, hai::Hai, tacha::Tacha};
 use std::fmt;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -6,7 +6,7 @@ pub(crate) enum HaiWithAttr {
     FromTehai(Hai),
     FromTacha(Tacha, Hai),
     Kakan(Hai),
-    Agari(Agari, Hai),
+    Agari(AgariType, Hai),
 }
 
 impl HaiWithAttr {

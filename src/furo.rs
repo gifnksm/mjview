@@ -50,6 +50,10 @@ impl fmt::Display for Furo {
 }
 
 impl Furo {
+    pub(crate) fn is_menzen(&self) -> bool {
+        matches!(self.0, FuroKind::Ankan { .. })
+    }
+
     pub(crate) fn to_vec(&self) -> HaiVec {
         use HaiWithAttr::*;
         match self.0 {
@@ -140,6 +144,13 @@ impl Furo {
                 from_tehai: [t0, t1, t2, t3],
             } => vec![H::hidden(t0), H::normal(t1), H::normal(t2), H::hidden(t3)],
         }
+    }
+
+    pub(crate) fn compute_fu(&self) -> u32 {
+        // 場風、自風は雀頭の符にのみ影響するため、何でも良い
+        let bakaze = Hai::try_new(HaiCategory::Jihai, 1, false).unwrap();
+        let jikaze = bakaze;
+        Mentsu::from(*self).compute_fu(self.is_menzen(), bakaze, jikaze)
     }
 }
 

@@ -1,13 +1,8 @@
 use crate::{
-    agari::Agari,
-    hai::{self, Hai},
-    hai_category::HaiCategory,
+    hai_builder::{Error as ParseError, HaiBuilder},
     hai_with_attr::HaiWithAttr,
-    tacha::Tacha,
 };
-use enum_iterator::IntoEnumIterator;
 use std::{fmt, iter::FromIterator, str::FromStr};
-use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct HaiVec(pub(crate) Vec<HaiWithAttr>);
@@ -43,161 +38,32 @@ impl HaiVec {
     }
 }
 
-#[derive(Debug, Error)]
-#[error(transparent)]
-pub(crate) struct ParseError(#[from] ParseErrorKind);
-
-#[derive(Debug, Error)]
-enum ParseErrorKind {
-    #[error("number not found")]
-    NumberNotFound,
-    #[error("category not found at last")]
-    CategoryNotFound,
-    #[error("invalid char found: `{0}`")]
-    InvalidChar(char),
-    #[error("multiple prefix found: `{0}` and `{1}`")]
-    MultiplePrefix(Prefix, Prefix),
-    #[error("multiple dora sign found: `$`")]
-    MultipleDora,
-    #[error("multiple category found: `{0}` and `{1}`")]
-    MultipleCategory(HaiCategory, HaiCategory),
-    #[error(transparent)]
-    NewHai(#[from] hai::NewError),
-}
-
 impl FromStr for HaiVec {
     type Err = ParseError;
 
     fn from_str(mut s: &str) -> Result<Self, Self::Err> {
-        use ParseErrorKind as E;
-
-        let mut builders: Vec<Builder> = vec![];
+        let mut builders: Vec<HaiBuilder> = vec![];
         while !s.is_empty() {
-            let mut builder = Builder::default();
-
-            // prefix
-            while let Some((prefix, rest)) = parse_prefix(s) {
-                if let Some(old_prefix) = builder.prefix.replace(prefix) {
-                    return Err(E::MultiplePrefix(old_prefix, prefix).into());
-                }
-                s = rest;
-            }
-
-            // number
-            let mut chars = s.chars();
-            let ch = chars.next().ok_or(E::NumberNotFound)?;
-            let number = ch.to_digit(10).ok_or(E::InvalidChar(ch))?;
-            assert!(builder.number.is_none());
-            builder.number.replace(number as u8);
-            s = chars.as_str();
-
-            // akadora
-            while let Some(rest) = s.strip_prefix('$') {
-                if builder.akadora {
-                    return Err(E::MultipleDora.into());
-                }
-                builder.akadora = true;
-                s = rest;
-            }
-
-            // suffix
-            while let Some((category, rest)) = parse_category(s) {
-                if let Some(old_category) = builder.category.replace(category) {
-                    return Err(E::MultipleCategory(old_category, category).into());
-                }
+            let mut builder = HaiBuilder::new(true);
+            s = builder.eat_str(s)?;
+            if let Some(category) = builder.category() {
                 for b in builders.iter_mut().rev() {
-                    match b.category {
-                        Some(_) => break,
-                        None => b.category = Some(category),
+                    if b.set_category(category).is_err() {
+                        break;
                     }
                 }
-                s = rest;
             }
-
             builders.push(builder);
         }
 
-        Result::from_iter(builders.into_iter().map(Builder::build)).map(Self)
+        Result::from_iter(builders.into_iter().map(HaiBuilder::build)).map(Self)
     }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum Prefix {
-    Tacha(Tacha),
-    Kakan,
-    Agari(Agari),
-}
-
-impl fmt::Display for Prefix {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Prefix::Tacha(tacha) => write!(f, "{}", tacha),
-            Prefix::Kakan => write!(f, "+"),
-            Prefix::Agari(agari) => write!(f, "{}", agari),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Default)]
-struct Builder {
-    prefix: Option<Prefix>,
-    number: Option<u8>,
-    category: Option<HaiCategory>,
-    akadora: bool,
-    tacha: Option<Tacha>,
-}
-
-impl Builder {
-    fn build(self) -> Result<HaiWithAttr, ParseError> {
-        use HaiWithAttr::*;
-        use ParseErrorKind as E;
-        let hai = match (self.number, self.category) {
-            (Some(number), Some(category)) => {
-                Hai::try_new(category, number, self.akadora).map_err(E::from)?
-            }
-            _ => return Err(E::CategoryNotFound.into()),
-        };
-
-        let res = match self.prefix {
-            None => FromTehai(hai),
-            Some(Prefix::Tacha(p)) => FromTacha(p, hai),
-            Some(Prefix::Kakan) => Kakan(hai),
-            Some(Prefix::Agari(agari)) => Agari(agari, hai),
-        };
-        Ok(res)
-    }
-}
-
-fn parse_prefix(s: &str) -> Option<(Prefix, &str)> {
-    for tacha in Tacha::into_enum_iter() {
-        if let Some(rest) = s.strip_prefix(tacha.to_str()) {
-            return Some((Prefix::Tacha(tacha), rest));
-        }
-    }
-    if let Some(rest) = s.strip_prefix('+') {
-        return Some((Prefix::Kakan, rest));
-    }
-    for agari in Agari::into_enum_iter() {
-        if let Some(rest) = s.strip_prefix(agari.to_str()) {
-            return Some((Prefix::Agari(agari), rest));
-        }
-    }
-
-    None
-}
-
-fn parse_category(s: &str) -> Option<(HaiCategory, &str)> {
-    for c in HaiCategory::into_enum_iter() {
-        if let Some(rest) = s.strip_prefix(c.to_str()) {
-            return Some((c, rest));
-        }
-    }
-    None
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::hai_builder::ErrorKind as ParseErrorKind;
     use assert_matches::assert_matches;
 
     #[test]
@@ -207,7 +73,7 @@ mod test {
             HaiVec::from_str(s).unwrap().to_string()
         }
         fn err(s: &str) -> ParseErrorKind {
-            HaiVec::from_str(s).unwrap_err().0
+            HaiVec::from_str(s).unwrap_err().into()
         }
         macro_rules! h {
             ($expected:expr, $($expr:expr),*) => {

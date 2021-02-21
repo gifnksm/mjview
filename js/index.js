@@ -12,21 +12,32 @@ document.addEventListener("DOMContentLoaded", (_e) => {
 
 async function onSubmit(e, form) {
   e.preventDefault();
+
+  let { Tehai, Hai } = await import("../pkg/index.js");
+
   messageElem.textContent = "";
   let tehai = form.elements["tehai"].value;
+  let bakaze = Hai.fromStr(form.elements["bakaze"].value);
+  let jikaze = Hai.fromStr(form.elements["jikaze"].value);
 
   let res;
   try {
     tehaiViewElem.tehai = tehai;
-    let { Tehai } = await import("../pkg/index.js");
     res = Tehai.fromStr(tehai);
   } catch (e) {
     messageElem.textContent = e;
+    throw e;
   }
 
-  let comb = res.toMentsuCombinations();
-  messageElem.textContent = "[" + comb.join("] [") + "] + " + res.furo;
-  console.log(comb);
+  let comb = res.toAgariCombinations();
+  for (let agari of comb) {
+    messageElem.appendChild(
+      document.createTextNode(
+        `${agari} (${agari.computeFu(bakaze, jikaze)}符)`,
+      ),
+    );
+    messageElem.appendChild(document.createElement("br"));
+  }
 }
 
 function main() {

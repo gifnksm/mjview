@@ -1,5 +1,9 @@
-use crate::hai_category::HaiCategory;
-use std::fmt;
+use crate::{
+    hai_builder::{Error as ParseError, HaiBuilder},
+    hai_category::HaiCategory,
+    hai_with_attr::HaiWithAttr,
+};
+use std::{fmt, str::FromStr};
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
@@ -15,6 +19,20 @@ pub struct Hai {
 impl fmt::Display for Hai {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}{}", self.number, self.to_dora_str(), self.category)
+    }
+}
+
+impl FromStr for Hai {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut builder = HaiBuilder::new(false);
+        builder.eat_whole_str(s)?;
+        let hai = match builder.build()? {
+            HaiWithAttr::FromTehai(hai) => hai,
+            _ => unreachable!(),
+        };
+        Ok(hai)
     }
 }
 
@@ -71,6 +89,16 @@ impl Hai {
         self.category == other.category && self.number == other.number + 1
     }
 
+    /// ヤオ九牌か否か
+    pub(crate) fn is_yaochuhai(&self) -> bool {
+        self.category == HaiCategory::Jihai || self.number == 1 || self.number == 9
+    }
+
+    /// 三元牌か否か
+    pub(crate) fn is_sangenpai(&self) -> bool {
+        self.category == HaiCategory::Jihai && (5..=7).contains(&self.number)
+    }
+
     pub(crate) fn to_dora_str(&self) -> &'static str {
         if self.akadora {
             "$"
@@ -86,15 +114,22 @@ impl Hai {
     pub fn to_string_js(&self) -> String {
         self.to_string()
     }
+
+    #[wasm_bindgen(js_name = "fromStr")]
+    pub fn from_str_js(s: &str) -> Result<Hai, JsValue> {
+        let res = Self::from_str(s).map_err(|e| e.to_string())?;
+        Ok(res)
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::hai_builder::ErrorKind as ParseErrorKind;
     use assert_matches::assert_matches;
 
     #[test]
-    fn hai_new() {
+    fn new() {
         use HaiCategory::*;
         fn ok(category: HaiCategory, number: u8, akadora: bool) {
             assert_eq!(
@@ -121,5 +156,35 @@ mod test {
         invalid_number(Pinzu, 10, false);
         invalid_number(Jihai, 0, false);
         invalid_number(Jihai, 8, false);
+    }
+
+    #[test]
+    fn parse() {
+        use ParseErrorKind::*;
+        fn ok(s: &str) -> String {
+            Hai::from_str(s).unwrap().to_string()
+        }
+        fn err(s: &str) -> ParseErrorKind {
+            Hai::from_str(s).unwrap_err().into()
+        }
+        macro_rules! h {
+            ($expected:expr, $($expr:expr),*) => {
+                {
+                    assert_eq!($expected, [$($expr.to_string()),*].join(""));
+                    true
+                }
+            }
+        }
+        assert_eq!(ok("1p"), "1p");
+        assert_eq!(ok("5$m"), "5$m");
+
+        assert_matches!(err(""), NumberNotFound);
+        assert_matches!(err("p"), InvalidChar('p'));
+        assert_matches!(err("1"), CategoryNotFound);
+        assert_matches!(err("1pm"), MultipleCategory(a, b) if h!("pm", a, b));
+        assert_matches!(err("1p2p"), InvalidChar('2'));
+        assert_matches!(err("12p"), InvalidChar('2'));
+        assert_matches!(err("<1p"), InvalidChar('<'));
+        assert_matches!(err("1$$p"), MultipleDora);
     }
 }
