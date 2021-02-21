@@ -69,7 +69,7 @@ class MahjongTehai extends HTMLElement {
 
     let agariHaiElem = document.createElement("div");
     agariHaiElem.classList.add("agari-hai");
-    switch (res.agari.agari) {
+    switch (res.agariHai.agari) {
       case "!":
         agariHaiElem.classList.add("tsumo");
         break;
@@ -77,7 +77,7 @@ class MahjongTehai extends HTMLElement {
         agariHaiElem.classList.add("ron");
         break;
     }
-    agariHaiElem.appendChild(haiImage(res.agari.toImage()));
+    agariHaiElem.appendChild(haiImage(res.agariHai.toImage()));
     elem.appendChild(agariHaiElem);
   }
 }

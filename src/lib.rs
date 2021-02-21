@@ -2,14 +2,18 @@ use wasm_bindgen::prelude::*;
 
 mod agari;
 mod agari_hai;
+mod agari_type;
 mod furo;
 mod hai;
+mod hai_builder;
 mod hai_category;
 mod hai_image;
 mod hai_vec;
 mod hai_with_attr;
 mod jun_tehai;
 mod kotsu_candidates;
+mod machi;
+mod machi_combinations;
 mod mentsu;
 mod mentsu_combinations;
 mod shuntsu_candidates;

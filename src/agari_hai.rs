@@ -1,5 +1,6 @@
 use crate::{
-    agari::Agari, hai::Hai, hai_image::HaiImage, hai_vec::HaiVec, hai_with_attr::HaiWithAttr,
+    agari_type::AgariType, hai::Hai, hai_image::HaiImage, hai_vec::HaiVec,
+    hai_with_attr::HaiWithAttr,
 };
 use std::{fmt, str::FromStr};
 use thiserror::Error;
@@ -9,17 +10,21 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct AgariHai {
-    agari: Agari,
+    type_: AgariType,
     hai: Hai,
 }
 
 impl fmt::Display for AgariHai {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}{}", self.agari, self.hai)
+        write!(f, "{}{}", self.type_, self.hai)
     }
 }
 
 impl AgariHai {
+    pub(crate) fn type_(&self) -> AgariType {
+        self.type_
+    }
+
     pub(crate) fn hai(&self) -> Hai {
         self.hai
     }
@@ -52,7 +57,7 @@ impl FromStr for AgariHai {
 
         let hai = hai_vec.0[0];
         match hai {
-            HaiWithAttr::Agari(agari, hai) => Ok(Self { agari, hai }),
+            HaiWithAttr::Agari(type_, hai) => Ok(Self { type_, hai }),
             _ => Err(E::InvalidHai(hai).into()),
         }
     }
@@ -68,7 +73,7 @@ impl AgariHai {
 impl AgariHai {
     #[wasm_bindgen(getter, js_name = "agari")]
     pub fn agari_js(&self) -> String {
-        self.agari.to_str().into()
+        self.type_.to_str().into()
     }
 
     #[wasm_bindgen(js_name = "toImage")]
