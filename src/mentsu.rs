@@ -83,15 +83,15 @@ impl Mentsu {
             MentsuKind::Shuntsu(_) => 0,
             MentsuKind::Kotsu([h0, ..]) => match (is_menzen, h0.is_yaochuhai()) {
                 (false, false) => 2, // 中張牌 / 明刻
-                (false, true) => 4,  // ヤオ九牌 / 明刻
+                (false, true) => 4,  // 么九牌 / 明刻
                 (true, false) => 4,  // 中張牌 / 暗刻
-                (true, true) => 8,   // ヤオ九牌 / 暗刻
+                (true, true) => 8,   // 么九牌 / 暗刻
             },
             MentsuKind::Kantsu([h0, ..]) => match (is_menzen, h0.is_yaochuhai()) {
                 (false, false) => 8, // 中張牌 / 明槓
-                (false, true) => 16, // ヤオ九牌 / 明槓
+                (false, true) => 16, // 么九牌 / 明槓
                 (true, false) => 16, // 中張牌 / 暗槓
-                (true, true) => 32,  // ヤオ九牌 / 暗槓
+                (true, true) => 32,  // 么九牌 / 暗槓
             },
             MentsuKind::Toitsu([h0, ..]) => {
                 if h0.is_sangenpai() {
@@ -214,15 +214,15 @@ mod test {
         assert_eq!(shuntsu("123p"), 0); // 順子
         assert_eq!(kotsu("444m", false), 2); // 明刻 / 中張牌
         assert_eq!(kotsu("444m", true), 4); // 暗刻 / 中張牌
-        assert_eq!(kotsu("777j", false), 4); // 明刻 / ヤオ九牌
-        assert_eq!(kotsu("777j", true), 8); // 暗刻 / ヤオ九牌
+        assert_eq!(kotsu("777j", false), 4); // 明刻 / 么九牌
+        assert_eq!(kotsu("777j", true), 8); // 暗刻 / 么九牌
         assert_eq!(toitsu("22j", nan, nan), 4); // 連風牌
         assert_eq!(toitsu("33j", nan, nan), 0); // オタ風
         assert_eq!(toitsu("66j", ton, ton), 2); // 三元牌 / 風牌
         assert_eq!(kantsu("2222s", false), 8); // 明槓 / 中張牌
         assert_eq!(kantsu("2222s", true), 16); // 暗槓 / 中張牌
-        assert_eq!(kantsu("1111j", false), 16); // 明槓 / ヤオ九牌
-        assert_eq!(kantsu("1111j", true), 32); // 暗槓 / ヤオ九牌
+        assert_eq!(kantsu("1111j", false), 16); // 明槓 / 么九牌
+        assert_eq!(kantsu("1111j", true), 32); // 暗槓 / 么九牌
 
         // 順子は0符 https://mj-king.net/tensu/tensu/2_02.html
         for s in &["789m", "456p", "345s"] {
@@ -232,7 +232,7 @@ mod test {
         for s in &["333p", "888s", "666m"] {
             assert_eq!(kotsu(s, false), 2);
         }
-        // ヤオ九牌のポンは4符 https://mj-king.net/tensu/tensu/2_04.html
+        // 么九牌のポンは4符 https://mj-king.net/tensu/tensu/2_04.html
         for s in &["444j", "999p", "777j"] {
             assert_eq!(kotsu(s, false), 4);
         }
@@ -240,7 +240,7 @@ mod test {
         for s in &["333m", "666p", "888s"] {
             assert_eq!(kotsu(s, true), 4);
         }
-        // ヤオ九牌の暗刻は8符 https://mj-king.net/tensu/tensu/2_06.html
+        // 么九牌の暗刻は8符 https://mj-king.net/tensu/tensu/2_06.html
         for s in &["444j", "999p", "777j"] {
             assert_eq!(kotsu(s, true), 8);
         }
@@ -248,7 +248,7 @@ mod test {
         for s in &["3333m", "6666p", "8888s"] {
             assert_eq!(kantsu(s, false), 8);
         }
-        // ヤオ九牌の明槓は16符 https://mj-king.net/tensu/tensu/2_08.html
+        // 么九牌の明槓は16符 https://mj-king.net/tensu/tensu/2_08.html
         for s in &["4444j", "9999p", "7777j"] {
             assert_eq!(kantsu(s, false), 16);
         }
@@ -256,7 +256,7 @@ mod test {
         for s in &["3333m", "6666p", "8888s"] {
             assert_eq!(kantsu(s, true), 16);
         }
-        // ヤオ九牌の暗槓は32符 https://mj-king.net/tensu/tensu/2_10.html
+        // 么九牌の暗槓は32符 https://mj-king.net/tensu/tensu/2_10.html
         for s in &["4444j", "9999p", "7777j"] {
             assert_eq!(kantsu(s, true), 32);
         }

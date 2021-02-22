@@ -89,7 +89,7 @@ impl Hai {
         self.category == other.category && self.number == other.number + 1
     }
 
-    /// ヤオ九牌か否か
+    /// 么九牌か否か
     pub(crate) fn is_yaochuhai(&self) -> bool {
         self.category == HaiCategory::Jihai || self.number == 1 || self.number == 9
     }
