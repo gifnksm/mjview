@@ -8,17 +8,18 @@ use wasm_bindgen::prelude::*;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Agari {
     tehai: Tehai,
-    tehai_mentsu: Vec<(Mentsu, u16)>,
-    machi: (usize, Machi),
+    tehai_mentsu: Vec<Mentsu>,
+    machi: Machi,
+    machi_mentsu_index: usize,
 }
 
 impl fmt::Display for Agari {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (idx, mentsu) in self.tehai_mentsu.iter().enumerate() {
-            if idx == self.machi.0 {
-                write!(f, "{{{}}}", mentsu.0)?;
+            if idx == self.machi_mentsu_index {
+                write!(f, "{{{}}}", mentsu)?;
             } else {
-                write!(f, "{}", mentsu.0)?;
+                write!(f, "{}", mentsu)?;
             }
             if idx + 1 < self.tehai_mentsu.len() {
                 write!(f, ",")?;
@@ -34,18 +35,20 @@ impl fmt::Display for Agari {
 impl Agari {
     pub(crate) fn new(
         tehai: Tehai,
-        tehai_mentsu: Vec<(Mentsu, u16)>,
-        machi: (usize, Machi),
+        tehai_mentsu: Vec<Mentsu>,
+        machi: Machi,
+        machi_mentsu_index: usize,
     ) -> Self {
         Self {
             tehai,
             tehai_mentsu,
             machi,
+            machi_mentsu_index,
         }
     }
 
     pub(crate) fn compute_fu(&self, bakaze: Hai, jikaze: Hai) -> u32 {
-        let is_menzen = self.tehai.furo().iter().all(|furo| furo.is_menzen());
+        let is_menzen = self.tehai.is_menzen();
         if self.tehai_mentsu.len() == 7 {
             // 七対子
             return 25;
@@ -56,13 +59,13 @@ impl Agari {
             .tehai_mentsu
             .iter()
             .enumerate()
-            .map(|(idx, (mentsu, _))| {
-                let is_menzen = !is_ron || self.machi.0 != idx;
+            .map(|(idx, mentsu)| {
+                let is_menzen = !is_ron || self.machi_mentsu_index != idx;
                 mentsu.compute_fu(is_menzen, bakaze, jikaze)
             })
             .sum::<u32>();
         let furo = self.tehai.furo().iter().map(Furo::compute_fu).sum::<u32>();
-        let machi = self.machi.1.compute_fu();
+        let machi = self.machi.compute_fu();
 
         if tehai_mentsu + furo + machi == 0 {
             // 平和形

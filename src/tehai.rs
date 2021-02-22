@@ -27,7 +27,7 @@ impl fmt::Display for Tehai {
 }
 
 impl Tehai {
-    fn to_mentsu_combinations(&self) -> Vec<Vec<(Mentsu, u16)>> {
+    fn to_mentsu_combinations(&self) -> Vec<Vec<Mentsu>> {
         let mut tehai = Vec::from(self.jun_tehai.as_slice());
         tehai.push(self.agari_hai.hai());
         tehai.sort();
@@ -37,14 +37,15 @@ impl Tehai {
     pub(crate) fn to_agari_combinations(&self) -> Vec<Agari> {
         let mut res = vec![];
         for mentsu in self.to_mentsu_combinations() {
-            let machi = MachiCombinations::new(
-                mentsu[..].iter().map(|&(mentsu, _)| mentsu),
-                self.agari_hai.hai(),
-            )
-            .map(|machi| Agari::new(self.clone(), mentsu.clone(), machi));
+            let machi = MachiCombinations::new(mentsu.iter().copied(), self.agari_hai.hai())
+                .map(|machi| Agari::new(self.clone(), mentsu.clone(), machi.1, machi.0));
             res.extend(machi);
         }
         res
+    }
+
+    pub(crate) fn is_menzen(&self) -> bool {
+        self.furo.iter().all(|furo| furo.is_menzen())
     }
 
     pub(crate) fn furo(&self) -> &[Furo] {

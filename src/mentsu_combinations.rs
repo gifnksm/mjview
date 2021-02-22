@@ -3,13 +3,13 @@ use crate::{
     shuntsu_candidates::ShuntsuCandidates, toitsu_candidates::ToitsuCandidates,
 };
 
-pub(crate) fn combinations(hai: &[Hai]) -> Vec<Vec<(Mentsu, u16)>> {
+pub(crate) fn combinations(hai: &[Hai]) -> Vec<Vec<Mentsu>> {
     let mut result = vec![];
 
     // 七対子
     if hai.len() == 14 && (0..7).all(|i| hai[i * 2].is_same(&hai[i * 2 + 1])) {
         let comb = (0..7)
-            .map(|i| (Mentsu::toitsu([hai[2 * i], hai[2 * i + 1]]), 0b11 << i))
+            .map(|i| Mentsu::toitsu([hai[2 * i], hai[2 * i + 1]]))
             .collect::<Vec<_>>();
         result.push(comb);
     }
@@ -17,17 +17,17 @@ pub(crate) fn combinations(hai: &[Hai]) -> Vec<Vec<(Mentsu, u16)>> {
     for toitsu in ToitsuCandidates::new(hai, 0, true) {
         let all_kotsu = KotsuCandidates::new(hai, toitsu.1).collect::<Vec<_>>();
         for kotsu_bit in 0..(1 << all_kotsu.len()) {
-            let mut comb = vec![toitsu];
+            let mut comb = vec![toitsu.0];
             let mut used_bits = toitsu.1;
             for (i, kotsu) in all_kotsu.iter().enumerate() {
                 if kotsu_bit & (1 << i) != 0 {
-                    comb.push(*kotsu);
+                    comb.push(kotsu.0);
                     used_bits |= kotsu.1;
                 }
             }
             for shuntsu in ShuntsuCandidates::new(hai, used_bits) {
                 used_bits |= shuntsu.1;
-                comb.push(shuntsu);
+                comb.push(shuntsu.0);
             }
             if used_bits + 1 == 1 << hai.len() {
                 comb.sort();
@@ -47,7 +47,7 @@ mod test {
 
     #[test]
     fn comb() {
-        fn parse(input: &str) -> Vec<Vec<(Mentsu, u16)>> {
+        fn parse(input: &str) -> Vec<Vec<Mentsu>> {
             let hai_vec = JunTehai::from_str(input).unwrap();
             combinations(hai_vec.as_slice())
         }
@@ -57,7 +57,7 @@ mod test {
                 .iter()
                 .map(|comb| {
                     comb.iter()
-                        .map(|(mentsu, _bits)| mentsu.to_string())
+                        .map(|mentsu| mentsu.to_string())
                         .collect::<Vec<_>>()
                 })
                 .collect::<Vec<_>>();
