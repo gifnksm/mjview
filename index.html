@@ -9,7 +9,7 @@
     <main>
       <mj-tehai tehai="" id="tehai-view"></mj-tehai>
       <form>
-        <label>手牌: <input type="text" id="tehai" size="80" /></label><br />
+        <label>手牌: <input type="text" name="tehai" size="80" /></label><br />
         <label
           >場風:
           <select id="bakaze">
@@ -28,6 +28,28 @@
             <option value="4j">北</option>
           </select></label
         ><br />
+        <label><input type="radio" name="tenho" value="" checked />なし</label>
+        <label><input type="radio" name="tenho" value="tenho" />天和</label>
+        <label><input type="radio" name="tenho" value="chiho" />地和</label
+        ><br />
+        <label><input type="radio" name="richi" value="" checked />なし</label>
+        <label><input type="radio" name="richi" value="richi" />立直</label>
+        <label
+          ><input type="radio" name="richi" value="daburi" />ダブル立直</label
+        >
+        <br />
+        <label><input type="checkbox" name="ippatsu" value="" />一発</label>
+        <br />
+        <label
+          ><input type="checkbox" name="rinshan" value="" />嶺上開花/搶槓</label
+        >
+        <br />
+        <label><input type="checkbox" name="haitei" value="" />海底/河底</label>
+        <br />
+        <label>ドラ表時牌: <input type="text" name="dora" value="" /></label>
+        <br />
+        <label>裏ドラ: <input type="text" name="uradora" value="" /></label>
+        <br />
         <button>OK</button>
         <div id="message"></div>
       </form>
