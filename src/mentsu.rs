@@ -1,4 +1,4 @@
-use crate::{hai::Hai, hai_vec::HaiVec, hai_with_attr::HaiWithAttr, machi::Machi};
+use crate::{env::Env, hai::Hai, hai_vec::HaiVec, hai_with_attr::HaiWithAttr, machi::Machi};
 use std::fmt;
 use wasm_bindgen::prelude::*;
 
@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 pub struct Mentsu(MentsuKind);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-enum MentsuKind {
+pub(crate) enum MentsuKind {
     /// 順子
     Shuntsu([Hai; 3]),
     /// 刻子
@@ -16,9 +16,25 @@ enum MentsuKind {
     Kantsu([Hai; 4]),
     /// 対子
     Toitsu([Hai; 2]),
+    /// 単独牌 (国士無双)
+    Single([Hai; 1]),
 }
 
 impl Mentsu {
+    pub(crate) fn kind(&self) -> &MentsuKind {
+        &self.0
+    }
+
+    pub(crate) fn head(&self) -> Hai {
+        match self.0 {
+            MentsuKind::Shuntsu([h0, ..]) => h0,
+            MentsuKind::Kotsu([h0, ..]) => h0,
+            MentsuKind::Kantsu([h0, ..]) => h0,
+            MentsuKind::Toitsu([h0, ..]) => h0,
+            MentsuKind::Single([h0]) => h0,
+        }
+    }
+
     pub(crate) fn shuntsu(hai: [Hai; 3]) -> Self {
         debug_assert!(hai[1].is_next_to(&hai[0]) && hai[2].is_next_to(&hai[1]));
         Self(MentsuKind::Shuntsu(hai))
@@ -41,6 +57,24 @@ impl Mentsu {
         Self(MentsuKind::Toitsu(hai))
     }
 
+    pub(crate) fn single(hai: [Hai; 1]) -> Self {
+        Self(MentsuKind::Single(hai))
+    }
+
+    fn as_slice(&self) -> &[Hai] {
+        match &self.0 {
+            MentsuKind::Shuntsu(v) => v,
+            MentsuKind::Kotsu(v) => v,
+            MentsuKind::Kantsu(v) => v,
+            MentsuKind::Toitsu(v) => v,
+            MentsuKind::Single(v) => v,
+        }
+    }
+
+    pub(crate) fn iter(&self) -> impl Iterator<Item = Hai> + '_ {
+        self.as_slice().iter().copied()
+    }
+
     fn to_hai_vec(&self) -> HaiVec {
         let t = HaiWithAttr::FromTehai;
         match self.0 {
@@ -49,6 +83,7 @@ impl Mentsu {
             }
             MentsuKind::Kantsu([h0, h1, h2, h3]) => HaiVec::new([t(h0), t(h1), t(h2), t(h3)]),
             MentsuKind::Toitsu([h0, h1]) => HaiVec::new([t(h0), t(h1)]),
+            MentsuKind::Single([h0]) => HaiVec::new([t(h0)]),
         }
     }
 
@@ -75,12 +110,13 @@ impl Mentsu {
             MentsuKind::Kotsu([h0, ..]) => h0.is_same(&agari).then(|| Machi::Shanpon),
             MentsuKind::Kantsu(_) => None,
             MentsuKind::Toitsu([h0, _]) => h0.is_same(&agari).then(|| Machi::Tanki),
+            MentsuKind::Single([h0]) => h0.is_same(&agari).then(|| Machi::Tanki),
         }
     }
 
-    pub(crate) fn compute_fu(&self, is_menzen: bool, bakaze: Hai, jikaze: Hai) -> u32 {
+    pub(crate) fn compute_fu(&self, is_menzen: bool, env: &Env) -> u32 {
         match self.0 {
-            MentsuKind::Shuntsu(_) => 0,
+            MentsuKind::Shuntsu(_) | MentsuKind::Single(_) => 0,
             MentsuKind::Kotsu([h0, ..]) => match (is_menzen, h0.is_yaochuhai()) {
                 (false, false) => 2, // 中張牌 / 明刻
                 (false, true) => 4,  // 么九牌 / 明刻
@@ -97,7 +133,7 @@ impl Mentsu {
                 if h0.is_sangenpai() {
                     2
                 } else {
-                    match (h0 == bakaze, h0 == jikaze) {
+                    match (h0 == env.bakaze, h0 == env.jikaze) {
                         (true, true) => 4,                  // 連風牌
                         (false, true) | (true, false) => 2, // 自風牌 or 場風牌
                         (false, false) => 0,                // 他
@@ -160,6 +196,10 @@ mod test {
         comb[0].0
     }
 
+    fn new_env(bakaze: Hai, jikaze: Hai) -> Env {
+        Env::new_empty(bakaze, jikaze)
+    }
+
     #[test]
     fn to_machi() {
         fn shuntsu(s: &str, machi: &str) -> Option<Machi> {
@@ -183,26 +223,24 @@ mod test {
     #[test]
     fn compute_fu() {
         fn shuntsu(s: &str) -> u32 {
-            let bakaze = new_hai("1j");
-            let jikaze = bakaze;
+            let env = new_env(new_hai("1j"), new_hai("1j"));
             let shuntsu = new_shuntsu(s);
-            let menzen = shuntsu.compute_fu(true, bakaze, jikaze);
-            let chi = shuntsu.compute_fu(false, bakaze, jikaze);
+            let menzen = shuntsu.compute_fu(true, &env);
+            let chi = shuntsu.compute_fu(false, &env);
             assert_eq!(menzen, chi);
             menzen
         }
         fn kotsu(s: &str, is_menzen: bool) -> u32 {
-            let bakaze = new_hai("1j");
-            let jikaze = bakaze;
-            new_kotsu(s).compute_fu(is_menzen, bakaze, jikaze)
+            let env = new_env(new_hai("1j"), new_hai("1j"));
+            new_kotsu(s).compute_fu(is_menzen, &env)
         }
         fn kantsu(s: &str, is_menzen: bool) -> u32 {
-            let bakaze = new_hai("1j");
-            let jikaze = bakaze;
-            new_kantsu(s).compute_fu(is_menzen, bakaze, jikaze)
+            let env = new_env(new_hai("1j"), new_hai("1j"));
+            new_kantsu(s).compute_fu(is_menzen, &env)
         }
         fn toitsu(s: &str, bakaze: Hai, jikaze: Hai) -> u32 {
-            new_toitsu(s).compute_fu(true, bakaze, jikaze)
+            let env = new_env(bakaze, jikaze);
+            new_toitsu(s).compute_fu(true, &env)
         }
 
         let ton = new_hai("1j");

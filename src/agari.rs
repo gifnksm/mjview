@@ -1,7 +1,15 @@
 use crate::{
-    agari_type::AgariType, furo::Furo, hai::Hai, machi::Machi, mentsu::Mentsu, tehai::Tehai,
+    agari_type::AgariType,
+    env::Env,
+    furo::FuroKind,
+    hai_category::HaiCategory,
+    machi::Machi,
+    mentsu::{Mentsu, MentsuKind},
+    tehai::Tehai,
+    yaku::{self, Rank},
 };
-use std::fmt;
+use js_sys::Array;
+use std::{fmt, iter};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -11,6 +19,33 @@ pub struct Agari {
     tehai_mentsu: Vec<Mentsu>,
     machi: Machi,
     machi_mentsu_index: usize,
+    janto_mentsu_index: Option<usize>,
+    /// 牌の数
+    num_hai: usize,
+    /// 萬子の数
+    num_manzu: usize,
+    /// 筒子の数
+    num_pinzu: usize,
+    /// 索子の数
+    num_souzu: usize,
+    /// 字牌の数
+    num_jihai: usize,
+    /// 暗順の数
+    num_anshun: usize,
+    /// 明順の数
+    num_minshun: usize,
+    /// 暗刻の数
+    num_anko: usize,
+    /// 明刻の数
+    num_minko: usize,
+    /// 暗槓の数
+    num_ankan: usize,
+    /// 明槓の数
+    num_minkan: usize,
+    /// 対子の数
+    num_toitsu: usize,
+    /// 単独牌の数
+    num_single: usize,
 }
 
 impl fmt::Display for Agari {
@@ -39,15 +74,211 @@ impl Agari {
         machi: Machi,
         machi_mentsu_index: usize,
     ) -> Self {
+        let is_tsumo = tehai.agari_hai().type_() == AgariType::Tsumo;
+        let janto_mentsu_index = tehai_mentsu
+            .iter()
+            .position(|mentsu| matches!(mentsu.kind(), MentsuKind::Toitsu(..)));
+        let num_hai = tehai.all_hai().count();
+        let num_manzu = tehai
+            .all_hai()
+            .filter(|hai| hai.category() == HaiCategory::Manzu)
+            .count();
+        let num_souzu = tehai
+            .all_hai()
+            .filter(|hai| hai.category() == HaiCategory::Souzu)
+            .count();
+        let num_pinzu = tehai
+            .all_hai()
+            .filter(|hai| hai.category() == HaiCategory::Pinzu)
+            .count();
+        let num_jihai = tehai
+            .all_hai()
+            .filter(|hai| hai.category() == HaiCategory::Jihai)
+            .count();
+        let num_anshun = tehai_mentsu
+            .iter()
+            .enumerate()
+            .filter(|(i, mentsu)| {
+                (is_tsumo || *i != machi_mentsu_index)
+                    && matches!(mentsu.kind(), MentsuKind::Shuntsu(..))
+            })
+            .count();
+        let num_minshun = tehai
+            .furo()
+            .iter()
+            .filter(|furo| matches!(furo.kind(), FuroKind::Chi { .. }))
+            .count()
+            + if !is_tsumo
+                && matches!(
+                    tehai_mentsu[machi_mentsu_index].kind(),
+                    MentsuKind::Shuntsu(..)
+                )
+            {
+                1
+            } else {
+                0
+            };
+        let num_anko = tehai_mentsu
+            .iter()
+            .enumerate()
+            .filter(|(i, mentsu)| {
+                (is_tsumo || *i != machi_mentsu_index)
+                    && matches!(mentsu.kind(), MentsuKind::Kotsu(..))
+            })
+            .count();
+        let num_minko = tehai
+            .furo()
+            .iter()
+            .filter(|furo| matches!(furo.kind(), FuroKind::Pon { .. }))
+            .count()
+            + if !is_tsumo
+                && matches!(
+                    tehai_mentsu[machi_mentsu_index].kind(),
+                    MentsuKind::Kotsu(..)
+                )
+            {
+                1
+            } else {
+                0
+            };
+        let num_ankan = tehai
+            .furo()
+            .iter()
+            .filter(|furo| matches!(furo.kind(), FuroKind::Ankan { .. }))
+            .count();
+        let num_minkan = tehai
+            .furo()
+            .iter()
+            .filter(|furo| {
+                matches!(
+                    furo.kind(),
+                    FuroKind::Kakan { .. } | FuroKind::Daiminkan { .. }
+                )
+            })
+            .count();
+        let num_toitsu = tehai_mentsu
+            .iter()
+            .filter(|mentsu| matches!(mentsu.kind(), MentsuKind::Toitsu(..)))
+            .count();
+        let num_single = tehai_mentsu
+            .iter()
+            .filter(|mentsu| matches!(mentsu.kind(), MentsuKind::Single(..)))
+            .count();
+        assert!(
+            num_toitsu == 7
+                || num_anshun
+                    + num_minshun
+                    + num_anko
+                    + num_minko
+                    + num_ankan
+                    + num_minkan
+                    + num_toitsu
+                    == 5
+                || (num_toitsu == 1 && num_single == 12)
+        );
         Self {
             tehai,
             tehai_mentsu,
             machi,
             machi_mentsu_index,
+            janto_mentsu_index,
+            num_hai,
+            num_manzu,
+            num_pinzu,
+            num_souzu,
+            num_jihai,
+            num_anshun,
+            num_minshun,
+            num_anko,
+            num_minko,
+            num_ankan,
+            num_minkan,
+            num_toitsu,
+            num_single,
         }
     }
 
-    pub(crate) fn compute_fu(&self, bakaze: Hai, jikaze: Hai) -> u32 {
+    pub(crate) fn tehai(&self) -> &Tehai {
+        &self.tehai
+    }
+
+    pub(crate) fn tehai_mentsu(&self) -> &[Mentsu] {
+        &self.tehai_mentsu
+    }
+
+    pub(crate) fn machi(&self) -> Machi {
+        self.machi
+    }
+
+    pub(crate) fn machi_mentsu(&self) -> Mentsu {
+        self.tehai_mentsu[self.machi_mentsu_index]
+    }
+
+    pub(crate) fn janto(&self) -> Option<Mentsu> {
+        self.janto_mentsu_index
+            .and_then(|idx| self.tehai_mentsu.get(idx).copied())
+    }
+
+    pub(crate) fn all_mentsu(&self) -> impl Iterator<Item = Mentsu> + '_ {
+        self.tehai_mentsu()
+            .iter()
+            .copied()
+            .chain(self.tehai().furo().iter().map(|furo| Mentsu::from(*furo)))
+    }
+
+    pub(crate) fn num_hai(&self) -> usize {
+        self.num_hai
+    }
+
+    pub(crate) fn num_manzu(&self) -> usize {
+        self.num_manzu
+    }
+
+    pub(crate) fn num_souzu(&self) -> usize {
+        self.num_souzu
+    }
+
+    pub(crate) fn num_pinzu(&self) -> usize {
+        self.num_pinzu
+    }
+
+    pub(crate) fn num_jihai(&self) -> usize {
+        self.num_jihai
+    }
+
+    pub(crate) fn num_anshun(&self) -> usize {
+        self.num_anshun
+    }
+
+    pub(crate) fn num_minshun(&self) -> usize {
+        self.num_minshun
+    }
+
+    pub(crate) fn num_anko(&self) -> usize {
+        self.num_anko
+    }
+
+    pub(crate) fn num_minko(&self) -> usize {
+        self.num_minko
+    }
+
+    pub(crate) fn num_ankan(&self) -> usize {
+        self.num_ankan
+    }
+
+    pub(crate) fn num_minkan(&self) -> usize {
+        self.num_minkan
+    }
+
+    pub(crate) fn num_toitsu(&self) -> usize {
+        self.num_toitsu
+    }
+
+    pub(crate) fn num_single(&self) -> usize {
+        self.num_single
+    }
+
+    pub(crate) fn compute_fu(&self, env: &Env) -> u32 {
         let is_menzen = self.tehai.is_menzen();
         if self.tehai_mentsu.len() == 7 {
             // 七対子
@@ -61,10 +292,15 @@ impl Agari {
             .enumerate()
             .map(|(idx, mentsu)| {
                 let is_menzen = !is_ron || self.machi_mentsu_index != idx;
-                mentsu.compute_fu(is_menzen, bakaze, jikaze)
+                mentsu.compute_fu(is_menzen, env)
             })
             .sum::<u32>();
-        let furo = self.tehai.furo().iter().map(Furo::compute_fu).sum::<u32>();
+        let furo = self
+            .tehai
+            .furo()
+            .iter()
+            .map(|furo| furo.compute_fu(env))
+            .sum::<u32>();
         let machi = self.machi.compute_fu();
 
         if tehai_mentsu + furo + machi == 0 {
@@ -86,6 +322,10 @@ impl Agari {
         let total = FUTEI + tehai_mentsu + furo + machi + menzen_kafu + tsumofu;
         (total + 9) / 10 * 10
     }
+
+    pub(crate) fn judge_yaku(&self, env: &Env) -> Vec<(&'static str, Rank)> {
+        yaku::judge(self, env)
+    }
 }
 
 #[wasm_bindgen]
@@ -96,15 +336,27 @@ impl Agari {
     }
 
     #[wasm_bindgen(js_name = "computeFu")]
-    pub fn compute_fu_js(&self, bakaze: &Hai, jikaze: &Hai) -> u32 {
-        self.compute_fu(*bakaze, *jikaze)
+    pub fn compute_fu_js(&self, env: &Env) -> u32 {
+        self.compute_fu(&env)
+    }
+
+    #[wasm_bindgen(js_name = "judgeYaku")]
+    pub fn judge_yaku_js(&self, env: &Env) -> Array {
+        self.judge_yaku(env)
+            .iter()
+            .map(|(name, rank)| {
+                iter::once(JsValue::from(*name))
+                    .chain(iter::once(JsValue::from(*rank)))
+                    .collect::<Array>()
+            })
+            .collect()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tehai::Tehai;
+    use crate::{hai::Hai, tehai::Tehai};
     use std::str::FromStr;
 
     #[test]
@@ -112,10 +364,11 @@ mod tests {
         let ton = Hai::from_str("1j").unwrap();
         let nan = Hai::from_str("2j").unwrap();
         fn comp(s: &str, bakaze: Hai, jikaze: Hai) -> u32 {
+            let env = Env::new_empty(bakaze, jikaze);
             let tehai = Tehai::from_str(s).unwrap();
             let comb = tehai.to_agari_combinations();
             assert_eq!(comb.len(), 1);
-            comb[0].compute_fu(bakaze, jikaze)
+            comb[0].compute_fu(&env)
         }
 
         // https://ja.wikipedia.org/wiki/%E9%BA%BB%E9%9B%80%E3%81%AE%E5%BE%97%E7%82%B9%E8%A8%88%E7%AE%97#%E7%AC%A6%E3%81%AE%E8%A8%88%E7%AE%97

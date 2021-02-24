@@ -1,5 +1,5 @@
 use crate::{
-    hai::Hai, hai_category::HaiCategory, hai_image::HaiImage, hai_vec::HaiVec,
+    env::Env, hai::Hai, hai_category::HaiCategory, hai_image::HaiImage, hai_vec::HaiVec,
     hai_with_attr::HaiWithAttr, mentsu::Mentsu, tacha::Tacha,
 };
 use std::{fmt, str::FromStr};
@@ -12,7 +12,7 @@ use wasm_bindgen::prelude::*;
 pub struct Furo(FuroKind);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-enum FuroKind {
+pub(crate) enum FuroKind {
     /// チー
     Chi {
         from_tehai: [Hai; 2], //< 手牌にあった牌
@@ -50,8 +50,16 @@ impl fmt::Display for Furo {
 }
 
 impl Furo {
+    pub(crate) fn kind(&self) -> &FuroKind {
+        &self.0
+    }
+
     pub(crate) fn is_menzen(&self) -> bool {
         matches!(self.0, FuroKind::Ankan { .. })
+    }
+
+    pub(crate) fn iter(&self) -> impl Iterator<Item = Hai> + '_ {
+        self.to_vec().0.into_iter().map(|hai| *hai.hai())
     }
 
     pub(crate) fn to_vec(&self) -> HaiVec {
@@ -146,11 +154,8 @@ impl Furo {
         }
     }
 
-    pub(crate) fn compute_fu(&self) -> u32 {
-        // 場風、自風は雀頭の符にのみ影響するため、何でも良い
-        let bakaze = Hai::try_new(HaiCategory::Jihai, 1, false).unwrap();
-        let jikaze = bakaze;
-        Mentsu::from(*self).compute_fu(self.is_menzen(), bakaze, jikaze)
+    pub(crate) fn compute_fu(&self, env: &Env) -> u32 {
+        Mentsu::from(*self).compute_fu(self.is_menzen(), env)
     }
 }
 

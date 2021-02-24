@@ -1,8 +1,9 @@
 use crate::{
-    agari::Agari, agari_hai::AgariHai, agari_type::AgariType, furo::Furo, jun_tehai::JunTehai,
-    machi_combinations::MachiCombinations, mentsu::Mentsu, mentsu_combinations,
+    agari::Agari, agari_hai::AgariHai, agari_type::AgariType, furo::Furo, hai::Hai,
+    jun_tehai::JunTehai, machi_combinations::MachiCombinations, mentsu::Mentsu,
+    mentsu_combinations,
 };
-use std::{fmt, str::FromStr};
+use std::{fmt, iter, str::FromStr};
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
@@ -27,6 +28,13 @@ impl fmt::Display for Tehai {
 }
 
 impl Tehai {
+    pub(crate) fn all_hai(&self) -> impl Iterator<Item = Hai> + '_ {
+        self.jun_tehai
+            .iter()
+            .chain(self.furo.iter().flat_map(|furo| furo.iter()))
+            .chain(iter::once(self.agari_hai.hai()))
+    }
+
     fn to_mentsu_combinations(&self) -> Vec<Vec<Mentsu>> {
         let mut tehai = Vec::from(self.jun_tehai.as_slice());
         tehai.push(self.agari_hai.hai());

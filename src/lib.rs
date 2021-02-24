@@ -3,6 +3,7 @@ use wasm_bindgen::prelude::*;
 mod agari;
 mod agari_hai;
 mod agari_type;
+mod env;
 mod furo;
 mod hai;
 mod hai_builder;
@@ -20,6 +21,7 @@ mod shuntsu_candidates;
 mod tacha;
 mod tehai;
 mod toitsu_candidates;
+mod yaku;
 
 // When the `wee_alloc` feature is enabled, this uses `wee_alloc` as the global
 // allocator.

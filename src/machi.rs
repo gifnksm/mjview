@@ -3,7 +3,7 @@
 pub(crate) enum Machi {
     /// 両面待ち
     Ryanmen,
-    /// 双ポン待ち
+    /// 双碰待ち
     Shanpon,
     /// 嵌張待ち
     Kanchan,

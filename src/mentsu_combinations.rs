@@ -1,13 +1,20 @@
 use crate::{
-    hai::Hai, kotsu_candidates::KotsuCandidates, mentsu::Mentsu,
+    hai::Hai, hai_category::HaiCategory, kotsu_candidates::KotsuCandidates, mentsu::Mentsu,
     shuntsu_candidates::ShuntsuCandidates, toitsu_candidates::ToitsuCandidates,
 };
 
 pub(crate) fn combinations(hai: &[Hai]) -> Vec<Vec<Mentsu>> {
+    if let Some(comb) = to_kokushi(hai) {
+        return vec![comb]; // 他の形とは複合しないため return して良い
+    }
+
     let mut result = vec![];
 
     // 七対子
-    if hai.len() == 14 && (0..7).all(|i| hai[i * 2].is_same(&hai[i * 2 + 1])) {
+    if hai.len() == 14
+        && (0..7).all(|i| hai[i * 2].is_same(&hai[i * 2 + 1]))
+        && (1..7).all(|i| !hai[i * 2 - 1].is_same(&hai[i * 2]))
+    {
         let comb = (0..7)
             .map(|i| Mentsu::toitsu([hai[2 * i], hai[2 * i + 1]]))
             .collect::<Vec<_>>();
@@ -37,6 +44,54 @@ pub(crate) fn combinations(hai: &[Hai]) -> Vec<Vec<Mentsu>> {
     }
     result.sort();
     result
+}
+
+fn to_kokushi(hai: &[Hai]) -> Option<Vec<Mentsu>> {
+    if hai.len() != 14 {
+        return None;
+    }
+    #[derive(Clone, Copy)]
+    enum Slot {
+        Empty,
+        One(Hai),
+        Two(Hai, Hai),
+    }
+    let mut hai_vec = vec![Slot::Empty; 13];
+    let mut cnt = 0;
+    for h in hai {
+        use HaiCategory::*;
+        let idx = match (h.category(), h.number()) {
+            (Manzu, 1) => 0,
+            (Manzu, 9) => 1,
+            (Pinzu, 1) => 2,
+            (Pinzu, 9) => 3,
+            (Souzu, 1) => 4,
+            (Souzu, 9) => 5,
+            (Jihai, n) => 5 + (n as usize),
+            _ => return None,
+        };
+        hai_vec[idx] = match hai_vec[idx] {
+            Slot::Empty => {
+                cnt += 1;
+                Slot::One(*h)
+            }
+            Slot::One(same_hai) => Slot::Two(same_hai, *h),
+            Slot::Two(_, _) => return None,
+        }
+    }
+    if cnt != 13 {
+        return None;
+    }
+    let mut tehai_mentsu = hai_vec
+        .into_iter()
+        .map(|slot| match slot {
+            Slot::Empty => unreachable!(),
+            Slot::One(h0) => Mentsu::single([h0]),
+            Slot::Two(h0, h1) => Mentsu::toitsu([h0, h1]),
+        })
+        .collect::<Vec<_>>();
+    tehai_mentsu.sort();
+    Some(tehai_mentsu)
 }
 
 #[cfg(test)]

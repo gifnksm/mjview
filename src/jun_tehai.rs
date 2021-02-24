@@ -19,6 +19,10 @@ impl JunTehai {
         &self.0
     }
 
+    pub(crate) fn iter(&self) -> impl Iterator<Item = Hai> + '_ {
+        self.0.iter().copied()
+    }
+
     fn to_hai_vec(&self) -> HaiVec {
         HaiVec::new(
             self.0

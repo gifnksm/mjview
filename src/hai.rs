@@ -77,8 +77,13 @@ impl Hai {
     pub(crate) fn category(&self) -> HaiCategory {
         self.category
     }
+
     pub(crate) fn number(&self) -> u8 {
         self.number
+    }
+
+    pub(crate) fn akadora(&self) -> bool {
+        self.akadora
     }
 
     pub(crate) fn is_same(&self, other: &Hai) -> bool {
@@ -86,12 +91,18 @@ impl Hai {
     }
 
     pub(crate) fn is_next_to(&self, other: &Hai) -> bool {
-        self.category == other.category && self.number == other.number + 1
+        self.category == other.category
+            && (self.number == other.number + 1 || self.number == 1 && other.number == 9)
     }
 
     /// 么九牌か否か
     pub(crate) fn is_yaochuhai(&self) -> bool {
         self.category == HaiCategory::Jihai || self.number == 1 || self.number == 9
+    }
+
+    /// 風牌か否か
+    pub(crate) fn is_kazehai(&self) -> bool {
+        self.category == HaiCategory::Jihai && (1..=4).contains(&self.number)
     }
 
     /// 三元牌か否か
