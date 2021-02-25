@@ -17,6 +17,7 @@ mod machi;
 mod machi_combinations;
 mod mentsu;
 mod mentsu_combinations;
+mod rank;
 mod shuntsu_candidates;
 mod tacha;
 mod tehai;

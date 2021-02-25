@@ -6,10 +6,9 @@ use crate::{
     machi::Machi,
     mentsu::{Mentsu, MentsuKind},
     tehai::Tehai,
-    yaku::{self, Rank},
+    yaku::Yaku,
 };
-use js_sys::Array;
-use std::{fmt, iter};
+use std::fmt;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -323,8 +322,8 @@ impl Agari {
         (total + 9) / 10 * 10
     }
 
-    pub(crate) fn judge_yaku(&self, env: &Env) -> Vec<(&'static str, Rank)> {
-        yaku::judge(self, env)
+    pub(crate) fn judge_yaku(&self, env: &Env) -> Yaku {
+        Yaku::new(self, env)
     }
 }
 
@@ -335,21 +334,9 @@ impl Agari {
         self.to_string()
     }
 
-    #[wasm_bindgen(js_name = "computeFu")]
-    pub fn compute_fu_js(&self, env: &Env) -> u32 {
-        self.compute_fu(&env)
-    }
-
     #[wasm_bindgen(js_name = "judgeYaku")]
-    pub fn judge_yaku_js(&self, env: &Env) -> Array {
+    pub fn judge_yaku_js(&self, env: &Env) -> Yaku {
         self.judge_yaku(env)
-            .iter()
-            .map(|(name, rank)| {
-                iter::once(JsValue::from(*name))
-                    .chain(iter::once(JsValue::from(*rank)))
-                    .collect::<Array>()
-            })
-            .collect()
     }
 }
 

@@ -12,7 +12,10 @@ document.addEventListener("DOMContentLoaded", (_e) => {
 
 async function onSubmit(e, form) {
   e.preventDefault();
+  await update(form);
+}
 
+async function update(form) {
   let { Tehai, Hai, Env } = await import("../pkg/index.js");
 
   messageElem.textContent = "";
@@ -52,18 +55,21 @@ async function onSubmit(e, form) {
 
     let comb = res.toAgariCombinations();
     for (let agari of comb) {
-      messageElem.appendChild(
-        document.createTextNode(`${agari} (${agari.computeFu(env)}符)`),
-      );
-      messageElem.appendChild(document.createElement("br"));
-      for (let [yaku, rank] of agari.judgeYaku(env)) {
-        let text = `${yaku}`;
-        if (rank.fan !== undefined) {
-          text += ` (${rank.fan}飜)`;
-        }
-        messageElem.appendChild(document.createTextNode(text));
-        messageElem.appendChild(document.createElement("br"));
+      let yaku = agari.judgeYaku(env);
+      let list = document.createElement("dl");
+      let header = document.createElement("dt");
+      header.textContent = `${agari} (${yaku.name}${yaku.point}点 ${yaku.rank} ${yaku.fu}符)`;
+      list.appendChild(header);
+      let body = document.createElement("dd");
+      let ul = document.createElement("ul");
+      for (let [name, rank] of yaku.detail) {
+        let li = document.createElement("li");
+        li.textContent = `${name} (${rank})`;
+        ul.appendChild(li);
       }
+      body.appendChild(ul);
+      list.appendChild(body);
+      messageElem.appendChild(list);
     }
   } catch (e) {
     messageElem.textContent = e;
@@ -73,6 +79,6 @@ async function onSubmit(e, form) {
 
 function main() {
   let form = document.forms[0];
-  tehaiViewElem.tehai = form.elements["tehai"].value;
+  update(form);
   form.addEventListener("submit", (e) => onSubmit(e, form));
 }

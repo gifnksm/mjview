@@ -1,64 +1,146 @@
 use crate::{
-    agari::Agari, agari_type::AgariType, env::Env, hai::Hai, hai_category::HaiCategory,
-    machi::Machi, mentsu::MentsuKind,
+    agari::Agari,
+    agari_type::AgariType,
+    env::Env,
+    hai::Hai,
+    hai_category::HaiCategory,
+    machi::Machi,
+    mentsu::MentsuKind,
+    rank::{Rank, RankKind},
 };
+use js_sys::Array;
+use std::{borrow::Cow, iter};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Rank(RankKind);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-enum RankKind {
-    Fan(u32),
-    Yakuman(u32),
+#[derive(Debug, Clone)]
+pub struct Yaku {
+    name: Cow<'static, str>,
+    point: u32,
+    fu: u32,
+    rank: Rank,
+    detail: Vec<(&'static str, Rank)>,
 }
 
-impl Rank {
-    fn fan(fan: u32) -> Self {
-        Self(RankKind::Fan(fan))
-    }
-
-    fn yakuman(count: u32) -> Self {
-        Self(RankKind::Yakuman(count))
-    }
-}
-
-#[wasm_bindgen]
-impl Rank {
-    #[wasm_bindgen(getter=fan)]
-    pub fn fan_js(&self) -> Option<u32> {
-        match self.0 {
-            RankKind::Fan(n) => Some(n),
-            _ => None,
+impl Yaku {
+    pub(crate) fn new(agari: &Agari, env: &Env) -> Self {
+        let fu = agari.compute_fu(env);
+        let (rank, detail) = judge(agari, env);
+        let (name, point) = compute_point(agari, env, fu, rank);
+        Self {
+            name,
+            point,
+            fu,
+            rank,
+            detail,
         }
     }
 }
 
-pub(crate) fn judge(agari: &Agari, env: &Env) -> Vec<(&'static str, Rank)> {
-    let yakuman = YAKUMAN_LIST
-        .iter()
-        .filter_map(|yaku| yaku(agari, env))
-        .map(|(name, count)| (name, Rank::yakuman(count)))
-        .collect::<Vec<_>>();
-    if !yakuman.is_empty() {
-        return yakuman;
+#[wasm_bindgen]
+impl Yaku {
+    #[wasm_bindgen(getter = name)]
+    pub fn name_js(&self) -> String {
+        self.name.to_string()
     }
 
-    let mut yaku = YAKU_LIST
-        .iter()
-        .filter_map(|yaku| yaku(agari, env))
-        .map(|(name, fan)| (name, Rank::fan(fan)))
-        .collect::<Vec<_>>();
-    if !yaku.is_empty() {
-        yaku.extend(
-            ADDITIONAL_LIST
-                .iter()
-                .filter_map(|yaku| yaku(agari, env))
-                .map(|(name, fan)| (name, Rank::fan(fan))),
-        );
+    #[wasm_bindgen(getter = point)]
+    pub fn point_js(&self) -> u32 {
+        self.point
     }
-    yaku
+
+    #[wasm_bindgen(getter = fu)]
+    pub fn fu_js(&self) -> u32 {
+        self.fu
+    }
+
+    #[wasm_bindgen(getter = rank)]
+    pub fn rank_js(&self) -> Rank {
+        self.rank
+    }
+
+    #[wasm_bindgen(getter = detail)]
+    pub fn detail_js(&self) -> Array {
+        self.detail
+            .iter()
+            .map(|(name, rank)| {
+                iter::once(JsValue::from(*name))
+                    .chain(iter::once(JsValue::from(*rank)))
+                    .collect::<Array>()
+            })
+            .collect()
+    }
+}
+
+fn judge(agari: &Agari, env: &Env) -> (Rank, Vec<(&'static str, Rank)>) {
+    if let Some((total, list)) = judge_list(agari, env, &YAKUMAN_LIST, Rank::new_yakuman) {
+        return (Rank::new_yakuman(total), list);
+    }
+
+    if let Some((mut total, mut list)) = judge_list(agari, env, &YAKU_LIST, Rank::new_fan) {
+        if let Some((dora_fan, mut dora_list)) =
+            judge_list(agari, env, &ADDITIONAL_LIST, Rank::new_fan)
+        {
+            total += dora_fan;
+            list.append(&mut dora_list);
+        }
+        return (Rank::new_fan(total), list);
+    }
+
+    (Rank::new_fan(0), vec![])
+}
+
+fn judge_list(
+    agari: &Agari,
+    env: &Env,
+    list: &[JudgeFn],
+    gen: impl Fn(u32) -> Rank,
+) -> Option<(u32, Vec<(&'static str, Rank)>)> {
+    let mut total_rank = 0;
+    let mut res = vec![];
+    for f in list {
+        if let Some((name, rank)) = f(agari, env) {
+            total_rank += rank;
+            res.push((name, gen(rank)));
+        }
+    }
+    (!res.is_empty()).then(|| (total_rank, res))
+}
+
+fn compute_point(agari: &Agari, env: &Env, fu: u32, rank: Rank) -> (Cow<'static, str>, u32) {
+    let (name, base_point) = compute_base_point(fu, rank);
+    let is_oya = env.jikaze.number() == 1;
+    let is_ron = agari.tehai().agari_hai().type_() == AgariType::Ron;
+    fn round(point: u32) -> u32 {
+        (point + 99) / 100 * 100
+    }
+    let point = match (is_oya, is_ron) {
+        (true, true) => round(base_point * 6),
+        (false, true) => round(base_point * 4),
+        (true, false) => round(base_point * 2) * 3,
+        (false, false) => round(base_point * 2) + round(base_point) * 2,
+    };
+
+    (name, point)
+}
+
+fn compute_base_point(fu: u32, rank: Rank) -> (Cow<'static, str>, u32) {
+    match rank.kind() {
+        RankKind::Fan(fan) if *fan <= 5 => {
+            let base_point = fu * 2u32.pow(fan + 2);
+            if base_point <= 2000 {
+                ("".into(), base_point)
+            } else {
+                ("満貫".into(), 2000)
+            }
+        }
+        RankKind::Fan(fan) if *fan <= 7 => ("跳満".into(), 3000),
+        RankKind::Fan(fan) if *fan <= 10 => ("倍満".into(), 4000),
+        RankKind::Fan(fan) if *fan <= 12 => ("三倍満".into(), 6000),
+        RankKind::Fan(_) => ("数え役満".into(), 8000),
+        RankKind::Yakuman(1) => ("役満".into(), 8000),
+        RankKind::Yakuman(n) => (format!("{}倍役満", n).into(), n * 8000),
+    }
 }
 
 type JudgeFn = fn(agari: &Agari, env: &Env) -> Option<(&'static str, u32)>;
@@ -523,7 +605,7 @@ fn yakuhai(agari: &Agari, f: impl Fn(Hai) -> bool) -> bool {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::tehai::Tehai;
+    use crate::{rank::RankKind, tehai::Tehai};
     use std::str::FromStr;
 
     fn yaku(s: &str, env: &Env) -> String {
@@ -532,8 +614,9 @@ mod test {
         comb.into_iter()
             .map(|agari| {
                 let s = judge(&agari, env)
+                    .1
                     .into_iter()
-                    .map(|(name, fan)| match fan.0 {
+                    .map(|(name, fan)| match fan.kind() {
                         RankKind::Fan(fan) => format!("{}:{}", name, fan),
                         RankKind::Yakuman(yakuman) => format!("{}:!{}", name, yakuman),
                     })
