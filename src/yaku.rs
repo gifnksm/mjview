@@ -786,6 +786,9 @@ mod test {
         );
         // 副露したケース
         assert_eq!(yaku("234m24789s77j <324p ?3s", &env), "[三色同順:1]");
+
+        // index.html のサンプル
+        assert_eq!(yaku("12344m123p33j <213s ?3j", &env), "[三色同順:1]")
     }
 
     #[test]
@@ -1126,6 +1129,12 @@ mod test {
             yaku("19m19p19s1234567j ?1m", &env),
             "[国士無双十三面待ち:!2]",
         );
+
+        // index.html のサンプル
+        assert_eq!(
+            yaku("19m19p19s1234567j !1j", &env),
+            "[国士無双十三面待ち:!2]",
+        )
     }
 
     #[test]
@@ -1267,6 +1276,12 @@ mod test {
             yaku("1m 5555j 3333j ^7777s ^8888p ?1m", &env),
             "[四槓子:!1]"
         );
+
+        // index.html のサンプル
+        assert_eq!(
+            yaku("1m 9999p ^333+3s >4444j 6666m !1m", &env),
+            "[四槓子:!1]",
+        )
     }
 
     #[test]
