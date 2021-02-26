@@ -126,6 +126,7 @@ fn compute_point(agari: &Agari, env: &Env, fu: u32, rank: Rank) -> (Cow<'static,
 
 fn compute_base_point(fu: u32, rank: Rank) -> (Cow<'static, str>, u32) {
     match rank.kind() {
+        RankKind::Fan(0) => ("無役".into(), 0),
         RankKind::Fan(fan) if *fan <= 5 => {
             let base_point = fu * 2u32.pow(fan + 2);
             if base_point <= 2000 {
