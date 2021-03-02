@@ -8,7 +8,7 @@ use crate::{
     tehai::Tehai,
     yaku::Yaku,
 };
-use std::fmt;
+use std::{cmp::Ordering, fmt};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -337,6 +337,15 @@ impl Agari {
     #[wasm_bindgen(js_name = "judgeYaku")]
     pub fn judge_yaku_js(&self, env: &Env) -> Yaku {
         self.judge_yaku(env)
+    }
+
+    #[wasm_bindgen(js_name = compare)]
+    pub fn compare_js(&self, other: &Agari) -> i32 {
+        match self.cmp(other) {
+            Ordering::Less => -1,
+            Ordering::Equal => 0,
+            Ordering::Greater => 1,
+        }
     }
 }
 

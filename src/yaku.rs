@@ -9,7 +9,7 @@ use crate::{
     rank::{Rank, RankKind},
 };
 use js_sys::Array;
-use std::{borrow::Cow, iter};
+use std::{borrow::Cow, cmp::Ordering, iter};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -20,6 +20,29 @@ pub struct Yaku {
     fu: u32,
     rank: Rank,
     detail: Vec<(&'static str, Rank)>,
+}
+
+impl PartialEq for Yaku {
+    fn eq(&self, other: &Self) -> bool {
+        self.cmp(other) == Ordering::Equal
+    }
+}
+
+impl Eq for Yaku {}
+
+impl PartialOrd for Yaku {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Yaku {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.point
+            .cmp(&other.point)
+            .then_with(|| self.rank.cmp(&other.rank))
+            .then_with(|| self.fu.cmp(&other.fu))
+    }
 }
 
 impl Yaku {
@@ -69,6 +92,15 @@ impl Yaku {
                     .collect::<Array>()
             })
             .collect()
+    }
+
+    #[wasm_bindgen(js_name = compare)]
+    pub fn compare_js(&self, other: &Yaku) -> i32 {
+        match self.cmp(other) {
+            Ordering::Less => -1,
+            Ordering::Equal => 0,
+            Ordering::Greater => 1,
+        }
     }
 }
 
