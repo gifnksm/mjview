@@ -78,3 +78,9 @@ dfn {
 dfn:target {
   text-decoration: underline double red;
 }
+form {
+  border: 1px solid #ccc;
+  margin: 1em 0;
+  padding: 1em;
+  border-radius: 3px;
+}
