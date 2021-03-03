@@ -68,10 +68,6 @@ div.code {
 dfn {
   font-style: normal;
 }
-#message {
-  color: red;
-  font-family: monospace;
-}
 dfn {
   text-decoration: underline dashed black;
 }
@@ -79,8 +75,46 @@ dfn:target {
   text-decoration: underline double red;
 }
 form {
-  border: 1px solid #ccc;
   margin: 1em 0;
-  padding: 1em;
+  padding: 0;
   border-radius: 3px;
+}
+form table {
+  border-collapse: collapse;
+  width: 100%;
+}
+form th,
+form td {
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  padding: 0.5em;
+  vertical-align: top;
+}
+form th {
+  text-align: right;
+  width: 15ch;
+}
+form td ul {
+  margin-bottom: 0;
+}
+form td ul li::marker {
+  margin: 0 0.5ch 0 0;
+}
+.ok {
+  color: green;
+}
+.ok li::marker {
+  content: "✅";
+}
+.warning {
+  color: orange;
+}
+.warning li::marker {
+  content: "⚠";
+}
+.error {
+  color: red;
+}
+.error li::marker {
+  content: "⛔";
 }

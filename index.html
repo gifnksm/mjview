@@ -9,49 +9,108 @@
     <main>
       <mj-tehai tehai="" id="tehai-view"></mj-tehai>
       <form>
-        <label
-          >手牌: <input type="text" name="tehai" size="80" required /></label
-        ><br />
-        <label
-          >場風:
-          <select id="bakaze">
-            <option value="1j">東</option>
-            <option value="2j">南</option>
-            <option value="3j">西</option>
-            <option value="4j">北</option>
-          </select></label
-        ><br />
-        <label
-          >自風:
-          <select id="jikaze">
-            <option value="1j">東</option>
-            <option value="2j">南</option>
-            <option value="3j">西</option>
-            <option value="4j">北</option>
-          </select></label
-        ><br />
-        <label><input type="radio" name="tenho" value="" checked />なし</label>
-        <label><input type="radio" name="tenho" value="tenho" />天和</label>
-        <label><input type="radio" name="tenho" value="chiho" />地和</label
-        ><br />
-        <label><input type="radio" name="richi" value="" checked />なし</label>
-        <label><input type="radio" name="richi" value="richi" />立直</label>
-        <label
-          ><input type="radio" name="richi" value="daburi" />ダブル立直</label
-        >
-        <br />
-        <label><input type="checkbox" name="ippatsu" value="" />一発</label>
-        <br />
-        <label
-          ><input type="checkbox" name="rinshan" value="" />嶺上開花/搶槓</label
-        >
-        <br />
-        <label><input type="checkbox" name="haitei" value="" />海底/河底</label>
-        <br />
-        <label>ドラ表時牌: <input type="text" name="dora" value="" /></label>
-        <br />
-        <label>裏ドラ: <input type="text" name="uradora" value="" /></label>
-        <br />
+        <table>
+          <tr>
+            <th><label for="tehai">手牌:</label></th>
+            <td>
+              <input type="text" name="tehai" size="80" required />
+              <ul id="tehai-message"></ul>
+            </td>
+          </tr>
+          <tr>
+            <th><label for="bakaze">場風:</label></th>
+            <td>
+              <select id="bakaze">
+                <option value="1j">東</option>
+                <option value="2j">南</option>
+                <option value="3j">西</option>
+                <option value="4j">北</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <th><label for="jikaze">自風:</label></th>
+            <td>
+              <select id="jikaze">
+                <option value="1j">東</option>
+                <option value="2j">南</option>
+                <option value="3j">西</option>
+                <option value="4j">北</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <th>天和/地和:</th>
+            <td>
+              <label
+                ><input type="radio" name="tenho" value="" checked />なし</label
+              >
+              <label
+                ><input type="radio" name="tenho" value="tenho" />天和</label
+              >
+              <label
+                ><input type="radio" name="tenho" value="chiho" />地和</label
+              >
+              <ul id="tenho-message"></ul>
+            </td>
+          </tr>
+          <tr>
+            <th>立直:</th>
+            <td>
+              <label
+                ><input type="radio" name="richi" value="" checked />なし</label
+              >
+              <label
+                ><input type="radio" name="richi" value="richi" />立直</label
+              >
+              <label
+                ><input
+                  type="radio"
+                  name="richi"
+                  value="daburi"
+                />ダブル立直</label
+              >
+              <ul id="richi-message"></ul>
+            </td>
+          </tr>
+          <tr>
+            <th>偶然役:</th>
+            <td>
+              <label
+                ><input type="checkbox" name="ippatsu" value="" />一発</label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  name="rinshan"
+                  value=""
+                />嶺上開花(ツモ)/搶槓(ロン)</label
+              >
+              <label
+                ><input
+                  type="checkbox"
+                  name="haitei"
+                  value=""
+                />海底(ツモ)/河底(ロン)</label
+              >
+              <ul id="guzen-message"></ul>
+            </td>
+          </tr>
+          <tr>
+            <th><label for="dora">ドラ表示牌:</label></th>
+            <td>
+              <input type="text" name="dora" value="" />
+              <ul id="dora-message"></ul>
+            </td>
+          </tr>
+          <tr>
+            <th><label for="uradora">裏ドラ表示牌:</label></th>
+            <td>
+              <input type="text" name="uradora" value="" />
+              <ul id="uradora-message"></ul>
+            </td>
+          </tr>
+        </table>
       </form>
       <div id="message"></div>
       <p><a href="https://github.com/gifnksm/mjview/">GitHub Repository</a></p>
