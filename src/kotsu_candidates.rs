@@ -39,14 +39,15 @@ impl<'a> Iterator for KotsuCandidates<'a> {
                 continue;
             }
             let use_bits = 0b111 << start;
+            let skip_start = start + 3;
+            let skip_count = (skip_start..self.hai.len())
+                .take(2)
+                .take_while(|idx| start_hai.is_same(&self.hai[*idx]))
+                .count();
             let mut skip_bits = 0;
-            // Skip same hai
-            for skip_idx in start + 3..self.hai.len() {
-                let skip_hai = self.hai[skip_idx];
-                if !start_hai.is_same(&skip_hai) {
-                    break;
-                }
-                skip_bits |= 0b1 << skip_idx;
+            if skip_count == 1 {
+                // 天地創造をサポートするため、牌の数が1の場合のみスキップ :-)
+                skip_bits = 0b1 << skip_start;
             }
             self.visited_bits |= use_bits | skip_bits;
             return Some((Mentsu::kotsu([start_hai, mid_hai, end_hai]), use_bits));

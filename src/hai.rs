@@ -42,9 +42,9 @@ pub(crate) struct NewError(#[from] NewErrorKind);
 
 #[derive(Debug, Error)]
 enum NewErrorKind {
-    #[error("invalid hai: `{number}{category}`")]
+    #[error("不正な牌です: `{number}{category}`")]
     InvalidNumber { number: u8, category: HaiCategory },
-    #[error("invalid akadora: `{number}${category}`")]
+    #[error("不正な赤ドラです: `{number}${category}`")]
     InvalidAkadora { number: u8, category: HaiCategory },
 }
 

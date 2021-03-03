@@ -23,6 +23,7 @@ pub(crate) fn combinations(hai: &[Hai]) -> Vec<Vec<Mentsu>> {
 
     for toitsu in ToitsuCandidates::new(hai, 0, true) {
         let all_kotsu = KotsuCandidates::new(hai, toitsu.1).collect::<Vec<_>>();
+        dbg!(toitsu, &all_kotsu);
         for kotsu_bit in 0..(1 << all_kotsu.len()) {
             let mut comb = vec![toitsu.0];
             let mut used_bits = toitsu.1;
@@ -183,6 +184,12 @@ mod test {
         test(
             "11123456789999m",
             &[&["123m", "456m", "789m", "999m", "11m"]],
+        );
+
+        // 天地創造 :-)
+        test(
+            "55555555555555j",
+            &[&["555j", "555j", "555j", "555j", "55j"]],
         );
 
         for input in DATA {

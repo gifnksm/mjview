@@ -36,9 +36,9 @@ pub struct ParseError(#[from] ParseErrorKind);
 
 #[derive(Debug, Error)]
 enum ParseErrorKind {
-    #[error("invalid hai found: `{0}`")]
+    #[error("不正な牌 `{0}` があります")]
     InvalidHai(HaiWithAttr),
-    #[error("invalid number of hai: `{0}`")]
+    #[error("牌が複数個あります: `{0}`")]
     InvalidNumberOfHai(HaiVec),
     #[error(transparent)]
     HaiVec(#[from] <HaiVec as FromStr>::Err),
@@ -71,7 +71,12 @@ impl AgariHai {
 
 #[wasm_bindgen]
 impl AgariHai {
-    #[wasm_bindgen(getter, js_name = "agari")]
+    #[wasm_bindgen(getter = hai)]
+    pub fn hai_js(&self) -> Hai {
+        self.hai()
+    }
+
+    #[wasm_bindgen(getter = agari)]
     pub fn agari_js(&self) -> String {
         self.type_.to_str().into()
     }

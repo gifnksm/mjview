@@ -161,6 +161,11 @@ impl Furo {
 
 #[wasm_bindgen]
 impl Furo {
+    #[wasm_bindgen(js_name = "toHaiArray")]
+    pub fn to_hai_array_js(&self) -> Box<[JsValue]> {
+        self.iter().map(JsValue::from).collect()
+    }
+
     #[wasm_bindgen(js_name = "toString")]
     pub fn to_string_js(&self) -> String {
         self.to_string()
@@ -184,27 +189,27 @@ pub struct ParseError(#[from] ParseErrorKind);
 
 #[derive(Debug, Error)]
 enum ParseErrorKind {
-    #[error("multiple categories found: `{0}` and `{1}`")]
+    #[error("異なる種類の牌が混在しています: `{0}` and `{1}`")]
     MultipleCategories(HaiWithAttr, HaiWithAttr),
-    #[error("multiple hai from tacha found: `{}` and `{}`", HaiWithAttr::FromTacha(*.0, *.1), HaiWithAttr::FromTacha(*.2, *.3))]
+    #[error("複数の牌を他家から取得しています: `{}` and `{}`", HaiWithAttr::FromTacha(*.0, *.1), HaiWithAttr::FromTacha(*.2, *.3))]
     MultipleTacha(Tacha, Hai, Tacha, Hai),
-    #[error("multiple kakan hai found: `{}` and `{}`", HaiWithAttr::Kakan(*.0), HaiWithAttr::Kakan(*.1))]
+    #[error("加槓が複数回行われています: `{}` and `{}`", HaiWithAttr::Kakan(*.0), HaiWithAttr::Kakan(*.1))]
     MultipleKakan(Hai, Hai),
-    #[error("menzen chi found: `{}`", HaiVec::new([HaiWithAttr::FromTehai(*.0), HaiWithAttr::FromTehai(*.1), HaiWithAttr::FromTehai(*.2)]))]
-    MenzenChi(Hai, Hai, Hai),
-    #[error("menzen pon found: `{}`", HaiVec::new([HaiWithAttr::FromTehai(*.0), HaiWithAttr::FromTehai(*.1), HaiWithAttr::FromTehai(*.2)]))]
-    MenzenPon(Hai, Hai, Hai),
-    #[error("chi not from kamicha: `{}", HaiWithAttr::FromTacha(*.0, *.1))]
-    ChiNotFromKamicha(Tacha, Hai),
-    #[error("chi with kakan: `{}`", HaiWithAttr::Kakan(*.0))]
-    ChiWithKakan(Hai),
-    #[error("pon with kakan: `{}`", HaiWithAttr::Kakan(*.0))]
-    PonWithKakan(Hai),
-    #[error("ankan with kakan: `{}`", HaiWithAttr::Kakan(*.0))]
+    #[error("暗順 `{}` は副露になりません", HaiVec::new([HaiWithAttr::FromTehai(*.0), HaiWithAttr::FromTehai(*.1), HaiWithAttr::FromTehai(*.2)]))]
+    Anshun(Hai, Hai, Hai),
+    #[error("暗刻 `{}` は副露になりません", HaiVec::new([HaiWithAttr::FromTehai(*.0), HaiWithAttr::FromTehai(*.1), HaiWithAttr::FromTehai(*.2)]))]
+    Anko(Hai, Hai, Hai),
+    #[error("上家以外から順子を鳴くことはできません: `{}", HaiWithAttr::FromTacha(*.0, *.1))]
+    ShuntsuNotFromKamicha(Tacha, Hai),
+    #[error("順子に加槓牌 `{}` を含めることはできません", HaiWithAttr::Kakan(*.0))]
+    ShuntsuWithKakan(Hai),
+    #[error("刻子に加槓牌 `{}` を含めることはできません", HaiWithAttr::Kakan(*.0))]
+    KotsuWithKakan(Hai),
+    #[error("暗槓に加槓牌 `{}` を含めることはできません", HaiWithAttr::Kakan(*.0))]
     AnkanWithKakan(Hai),
-    #[error("invalid tehai combination for furo: `{0}`")]
+    #[error("順子/刻子/槓子にならない牌の組み合わせです: `{0}`")]
     InvalidCombination(HaiVec),
-    #[error("invalid hai found: `{0}`")]
+    #[error("不正な牌 `{0}` があります")]
     InvalidHai(HaiWithAttr),
     #[error(transparent)]
     HaiVec(#[from] <HaiVec as FromStr>::Err),
@@ -254,12 +259,12 @@ impl FromStr for Furo {
                     && h0.number() + 1 == h1.number()
                     && h1.number() + 1 == h2.number() =>
             {
-                let (tacha, from_tacha) = from_tacha.ok_or_else(|| E::MenzenChi(*h0, *h1, *h2))?;
+                let (tacha, from_tacha) = from_tacha.ok_or_else(|| E::Anshun(*h0, *h1, *h2))?;
                 if tacha != Tacha::Kamicha {
-                    return Err(E::ChiNotFromKamicha(tacha, from_tacha).into());
+                    return Err(E::ShuntsuNotFromKamicha(tacha, from_tacha).into());
                 }
                 if let Some(hai) = kakan {
-                    return Err(E::ChiWithKakan(hai).into());
+                    return Err(E::ShuntsuWithKakan(hai).into());
                 }
                 assert_eq!(from_tehai.len(), 2);
                 FuroKind::Chi {
@@ -269,9 +274,9 @@ impl FromStr for Furo {
             }
             // ポン
             [h0, h1, h2] if h0.number() == h1.number() && h1.number() == h2.number() => {
-                let (tacha, from_tacha) = from_tacha.ok_or_else(|| E::MenzenPon(*h0, *h1, *h2))?;
+                let (tacha, from_tacha) = from_tacha.ok_or_else(|| E::Anko(*h0, *h1, *h2))?;
                 if let Some(hai) = kakan {
-                    return Err(E::PonWithKakan(hai).into());
+                    return Err(E::KotsuWithKakan(hai).into());
                 }
                 assert_eq!(from_tehai.len(), 2);
                 FuroKind::Pon {
@@ -397,15 +402,15 @@ mod test {
         // チー
         assert_eq!(ok("1<23p"), "<213p");
         assert_eq!(ok("4<5$p3p"), "<5$34p");
-        assert_matches!(err("456p"), MenzenChi(a, b, c) if h!("4p5p6p", a, b, c));
-        assert_matches!(err("45^6p"), ChiNotFromKamicha(tacha, hai) if h!("^6p", tacha, hai));
-        assert_matches!(err("4<5+6m"), ChiWithKakan(hai) if h!("6m", hai));
+        assert_matches!(err("456p"), Anshun(a, b, c) if h!("4p5p6p", a, b, c));
+        assert_matches!(err("45^6p"), ShuntsuNotFromKamicha(tacha, hai) if h!("^6p", tacha, hai));
+        assert_matches!(err("4<5+6m"), ShuntsuWithKakan(hai) if h!("6m", hai));
 
         // ポン
         assert_eq!(ok("3^33j"), "^333j");
         assert_eq!(ok("5^5$5m"), "^5$55m");
-        assert_matches!(err("333p"), MenzenPon(a, b, c) if h!("3p3p3p", a, b, c));
-        assert_matches!(err("5+5^5j"), PonWithKakan(hai) if h!("5j", hai));
+        assert_matches!(err("333p"), Anko(a, b, c) if h!("3p3p3p", a, b, c));
+        assert_matches!(err("5+5^5j"), KotsuWithKakan(hai) if h!("5j", hai));
 
         // 加槓
         assert_eq!(ok("+1<111j"), "<111+1j");

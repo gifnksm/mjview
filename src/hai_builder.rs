@@ -15,19 +15,19 @@ pub struct Error(#[from] ErrorKind);
 
 #[derive(Debug, Error)]
 pub(crate) enum ErrorKind {
-    #[error("number not found")]
+    #[error("数字がありません")]
     NumberNotFound,
-    #[error("category not found at last")]
+    #[error("牌の種類を表す文字 (`m`, `s`, `p`, `j`) が末尾に必要です")]
     CategoryNotFound,
-    #[error("invalid char found: `{0}`")]
+    #[error("不正な文字 `{0}` があります")]
     InvalidChar(char),
-    #[error("multiple prefix found: `{0}` and `{1}`")]
+    #[error("プレフィックスが複数あります: `{0}` and `{1}`")]
     MultiplePrefix(Prefix, Prefix),
-    #[error("multiple number found: `{0}` and `{1}`")]
+    #[error("数字が複数あります: `{0}` and `{1}`")]
     MultipleNumber(u8, u8),
-    #[error("multiple dora sign found: `$`")]
+    #[error("ドラ記号 `$` が複数あります")]
     MultipleDora,
-    #[error("multiple category found: `{0}` and `{1}`")]
+    #[error("牌の種類を表す文字が複数あります: `{0}` and `{1}`")]
     MultipleCategory(HaiCategory, HaiCategory),
     #[error(transparent)]
     NewHai(#[from] hai::NewError),

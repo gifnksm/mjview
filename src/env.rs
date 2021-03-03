@@ -147,16 +147,36 @@ impl Env {
     }
 
     #[wasm_bindgen(js_name = "setDora")]
-    pub fn set_dora(&mut self, value: String) -> Result<(), JsValue> {
+    pub fn set_dora_js(&mut self, value: String) -> Result<(), JsValue> {
         let tehai = JunTehai::from_str(&value).map_err(|e| e.to_string())?;
         self.dora = tehai.as_slice().into();
         Ok(())
     }
 
+    #[wasm_bindgen(getter = doraCount)]
+    pub fn dora_count_js(&self) -> usize {
+        self.dora.len()
+    }
+
+    #[wasm_bindgen(getter = dora)]
+    pub fn dora_js(&self) -> Box<[JsValue]> {
+        self.dora.iter().copied().map(JsValue::from).collect()
+    }
+
     #[wasm_bindgen(js_name = "setUradora")]
-    pub fn set_uradora(&mut self, value: String) -> Result<(), JsValue> {
+    pub fn set_uradora_js(&mut self, value: String) -> Result<(), JsValue> {
         let tehai = JunTehai::from_str(&value).map_err(|e| e.to_string())?;
         self.uradora = tehai.as_slice().into();
         Ok(())
+    }
+
+    #[wasm_bindgen(getter = uradoraCount)]
+    pub fn uradora_count_ja(&self) -> usize {
+        self.uradora.len()
+    }
+
+    #[wasm_bindgen(getter = uradora)]
+    pub fn uradora_js(&self) -> Box<[JsValue]> {
+        self.uradora.iter().copied().map(JsValue::from).collect()
     }
 }

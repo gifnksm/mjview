@@ -3,7 +3,7 @@ use crate::{
     jun_tehai::JunTehai, machi_combinations::MachiCombinations, mentsu::Mentsu,
     mentsu_combinations,
 };
-use std::{fmt, iter, str::FromStr};
+use std::{cmp::Ordering, fmt, iter, str::FromStr};
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
@@ -72,17 +72,22 @@ impl Tehai {
         self.to_string()
     }
 
-    #[wasm_bindgen(getter, js_name = "junTehai")]
+    #[wasm_bindgen(getter = isMenzen)]
+    pub fn is_menzen_js(&self) -> bool {
+        self.is_menzen()
+    }
+
+    #[wasm_bindgen(getter = junTehai)]
     pub fn jun_tehai_js(&self) -> JunTehai {
         self.jun_tehai.clone()
     }
 
-    #[wasm_bindgen(getter, js_name = "furo")]
+    #[wasm_bindgen(getter = furo)]
     pub fn furo_js(&self) -> Box<[JsValue]> {
         self.furo.iter().copied().map(JsValue::from).collect()
     }
 
-    #[wasm_bindgen(getter, js_name = "agariHai")]
+    #[wasm_bindgen(getter = agariHai)]
     pub fn agari_hai_js(&self) -> AgariHai {
         self.agari_hai
     }
@@ -108,17 +113,19 @@ pub struct ParseError(#[from] ParseErrorKind);
 
 #[derive(Debug, Error)]
 enum ParseErrorKind {
-    #[error("no jun-tehai found")]
+    #[error("純手牌がありません")]
     NoJunTehai,
-    #[error("no agari-hai found")]
+    #[error("あがり牌がありません")]
     NoAgariHai,
-    #[error("invalid hai count: `{0}`")]
-    InvalidHaiCount(usize),
-    #[error("jun-tehai: {0}")]
+    #[error("多牌です (牌の数: `{0}`)")]
+    Tahai(usize),
+    #[error("少牌です (牌の数: `{0}`)")]
+    Shohai(usize),
+    #[error("純手牌のパースエラー: {0}")]
     JunTehai(#[from] <JunTehai as FromStr>::Err),
-    #[error("furo: {0}")]
+    #[error("副露のパースエラー: {0}")]
     Furo(#[from] <Furo as FromStr>::Err),
-    #[error("agari-hai: {0}")]
+    #[error("あがり牌のパースエラー: {0}")]
     AgariHai(#[from] <AgariHai as FromStr>::Err),
 }
 
@@ -145,8 +152,10 @@ impl FromStr for Tehai {
         let agari_hai = AgariHai::from_str(agari_chunk).map_err(E::from)?;
 
         let hai_count = jun_tehai.as_slice().len() + furo.len() * 3 + 1;
-        if hai_count != 14 {
-            return Err(E::InvalidHaiCount(hai_count).into());
+        match hai_count.cmp(&14) {
+            Ordering::Less => return Err(E::Shohai(hai_count).into()),
+            Ordering::Equal => {}
+            Ordering::Greater => return Err(E::Tahai(hai_count).into()),
         }
 
         Ok(Tehai {

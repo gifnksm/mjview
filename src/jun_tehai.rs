@@ -40,6 +40,11 @@ impl JunTehai {
 
 #[wasm_bindgen]
 impl JunTehai {
+    #[wasm_bindgen(js_name = "toHaiArray")]
+    pub fn to_hai_array_js(&self) -> Box<[JsValue]> {
+        self.as_slice().iter().copied().map(JsValue::from).collect()
+    }
+
     #[wasm_bindgen(js_name = "toString")]
     pub fn to_string_js(&self) -> String {
         self.to_string()
@@ -57,7 +62,7 @@ pub struct ParseError(#[from] ParseErrorKind);
 
 #[derive(Debug, Error)]
 enum ParseErrorKind {
-    #[error("invalid hai found: `{0}`")]
+    #[error("不正な牌が含まれています: `{0}`")]
     InvalidHai(HaiWithAttr),
     #[error(transparent)]
     HaiVec(#[from] <HaiVec as FromStr>::Err),
