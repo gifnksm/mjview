@@ -23,7 +23,6 @@ pub(crate) fn combinations(hai: &[Hai]) -> Vec<Vec<Mentsu>> {
 
     for toitsu in ToitsuCandidates::new(hai, 0, true) {
         let all_kotsu = KotsuCandidates::new(hai, toitsu.1).collect::<Vec<_>>();
-        dbg!(toitsu, &all_kotsu);
         for kotsu_bit in 0..(1 << all_kotsu.len()) {
             let mut comb = vec![toitsu.0];
             let mut used_bits = toitsu.1;
