@@ -91,8 +91,16 @@ impl Hai {
     }
 
     pub(crate) fn is_next_to(&self, other: &Hai) -> bool {
-        self.category == other.category
-            && (self.number == other.number + 1 || self.number == 1 && other.number == 9)
+        use HaiCategory::*;
+        match (self.category, other.category) {
+            (Jihai, Jihai) => matches!(
+                (other.number, self.number),
+                (1, 2) | (2, 3) | (3, 4) | (4, 1) | (5, 6) | (6, 7) | (7, 5)
+            ),
+            (a, b) => {
+                a == b && (self.number == other.number + 1 || self.number == 1 && other.number == 9)
+            }
+        }
     }
 
     /// 么九牌か否か
