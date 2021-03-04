@@ -103,6 +103,13 @@ class EnvInput {
       }
     }
 
+    if (this._env.daburi && this._env.ippatsu && this._env.haitei) {
+      this._addWarningMessage(
+        "guzen",
+        "ダブル立直の一発と海底/河底は複合しません",
+      );
+    }
+
     if (this._env.tenho) {
       if (this._tehai !== null && this._tehai.agariHai.agari != "!") {
         this._addWarningMessage(
