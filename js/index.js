@@ -79,7 +79,7 @@ class EnvInput {
     this._clearWarning("dora");
     this._clearWarning("uradora");
 
-    this._emitHaiCountWarning();
+    let maps = this._emitHaiCountWarning();
 
     if (this._env.ippatsu) {
       if (!this._env.richi && !this._env.daburi) {
@@ -103,15 +103,23 @@ class EnvInput {
       }
     }
 
-    if (this._env.daburi && this._env.ippatsu && this._env.haitei) {
-      this._addWarningMessage(
-        "guzen",
-        "ダブル立直の一発と海底/河底は複合しません",
-      );
+    if (this._env.daburi && this._env.ippatsu) {
+      if (this._env.haitei) {
+        this._addWarningMessage(
+          "guzen",
+          "ダブル立直の一発と海底/河底は複合しません",
+        );
+      }
+      if (this._env.doraCount > 1) {
+        this._addWarningMessage(
+          "dora",
+          "ダブル立直の一発の場合ドラ表示牌は必ず1枚です",
+        );
+      }
     }
 
     if (this._env.tenho) {
-      if (this._tehai !== null && this._tehai.agariHai.agari != "!") {
+      if (this._tehai !== null && this._tehai.agariHai.agari !== "!") {
         this._addWarningMessage(
           "guzen",
           "天和/地和が成立するのはツモあがり時のみです",
@@ -140,13 +148,33 @@ class EnvInput {
       }
     }
 
+    if (
+      this._env.rinshan &&
+      this._tehai !== null &&
+      this._tehai.agariHai.agari === "?"
+    ) {
+      let hai = this._tehai.agariHai.hai;
+      if (maps.all.get(hai.toString()) > 1) {
+        this._addWarningMessage(
+          "tehai",
+          "搶槓のあがり牌が純手牌/副露/ドラ表時牌/裏ドラ表示牌に含まれています",
+        );
+      }
+    }
+
     if (this._env.doraCount == 0) {
       this._addWarningMessage("dora", "ドラ表示牌が0枚です");
     } else if (this._env.doraCount > 5) {
       this._addWarningMessage("dora", "ドラ表示牌が6枚以上あります");
     }
 
-    if (this._env.richi || this._env_daburi) {
+    if (this._env.richi || this._env.daburi) {
+      if (this._env.doraCount != this._env.uradoraCount) {
+        this._addWarningMessage(
+          "uradora",
+          "ドラ表示牌と裏ドラ表示牌の枚数が異なります",
+        );
+      }
       if (this._env.uradoraCount == 0) {
         this._addWarningMessage(
           "uradora",
@@ -222,6 +250,7 @@ class EnvInput {
         }
       }
     }
+    return maps;
   }
 
   _onChange(target) {
