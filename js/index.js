@@ -98,10 +98,6 @@ class EnvInput {
       }
     }
 
-    if (this._env.daburi && this._env.haitei) {
-      this._addWarningMessage("guzen", "海底/河底はダブル立直と複合しません");
-    }
-
     if (this._env.richi || this._env.daburi) {
       if (this._tehai !== null && !this._tehai.isMenzen) {
         this._addWarningMessage("richi", "立直/ダブル立直は門前時のみできます");
@@ -109,6 +105,12 @@ class EnvInput {
     }
 
     if (this._env.tenho || this._env.chiho) {
+      if (this._tehai !== null && this._tehai.agariHai.agari != "!") {
+        this._addWarningMessage(
+          "tenho",
+          "天和/地和が成立するのはツモあがり時のみです",
+        );
+      }
       if (this._tehai !== null && this._tehai.furo.length > 0) {
         this._addWarningMessage(
           "tenho",
@@ -134,8 +136,8 @@ class EnvInput {
 
     if (this._env.doraCount == 0) {
       this._addWarningMessage("dora", "ドラ表示牌が0枚です");
-    } else if (this._env.doraCount > 4) {
-      this._addWarningMessage("dora", "ドラ表示牌が5枚以上あります");
+    } else if (this._env.doraCount > 5) {
+      this._addWarningMessage("dora", "ドラ表示牌が6枚以上あります");
     }
 
     if (this._env.richi || this._env_daburi) {
@@ -144,8 +146,8 @@ class EnvInput {
           "uradora",
           "立直/ダブル立直していますが裏ドラ表示牌が0枚です",
         );
-      } else if (this._env.uradoraCount > 4) {
-        this._addWarningMessage("uradora", "裏ドラ表示牌が5枚以上あります");
+      } else if (this._env.uradoraCount > 5) {
+        this._addWarningMessage("uradora", "裏ドラ表示牌が6枚以上あります");
       }
     } else {
       if (this._env.uradoraCount > 0) {
