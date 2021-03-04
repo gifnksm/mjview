@@ -154,10 +154,22 @@ class EnvInput {
       this._tehai.agariHai.agari === "?"
     ) {
       let hai = this._tehai.agariHai.hai;
-      if (maps.all.get(hai.toString()) > 1) {
+      if (maps.tehai.get(hai.toString()) > 1) {
         this._addWarningMessage(
           "tehai",
-          "搶槓のあがり牌が純手牌/副露/ドラ表時牌/裏ドラ表示牌に含まれています",
+          "搶槓のあがり牌が純手牌/副露に含まれています",
+        );
+      }
+      if (maps.dora.get(hai.toString()) > 0) {
+        this._addWarningMessage(
+          "dora",
+          "搶槓のあがり牌がドラ表時牌に含まれています",
+        );
+      }
+      if (maps.uradora.get(hai.toString()) > 0) {
+        this._addWarningMessage(
+          "uradora",
+          "搶槓のあがり牌が裏ドラ表時牌に含まれています",
         );
       }
     }
