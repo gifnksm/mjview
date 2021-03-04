@@ -6,7 +6,6 @@ use wasm_bindgen::prelude::*;
 #[derive(Debug, Clone)]
 pub struct Env {
     pub(crate) tenho: bool,
-    pub(crate) chiho: bool,
     pub(crate) richi: bool,
     pub(crate) daburi: bool,
     pub(crate) ippatsu: bool,
@@ -23,7 +22,6 @@ impl Env {
     pub(crate) fn new_empty(bakaze: Hai, jikaze: Hai) -> Env {
         Env {
             tenho: false,
-            chiho: false,
             richi: false,
             daburi: false,
             ippatsu: false,
@@ -43,7 +41,6 @@ impl Env {
     pub fn new_js() -> Env {
         Env {
             tenho: false,
-            chiho: false,
             richi: false,
             daburi: false,
             ippatsu: false,
@@ -64,16 +61,6 @@ impl Env {
     #[wasm_bindgen(setter)]
     pub fn set_tenho(&mut self, value: bool) {
         self.tenho = value;
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn chiho(&self) -> bool {
-        self.chiho
-    }
-
-    #[wasm_bindgen(setter)]
-    pub fn set_chiho(&mut self, value: bool) {
-        self.chiho = value;
     }
 
     #[wasm_bindgen(getter)]

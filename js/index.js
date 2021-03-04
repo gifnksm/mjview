@@ -74,7 +74,6 @@ class EnvInput {
 
   _updateWarning() {
     this._clearWarning("tehai");
-    this._clearWarning("tenho");
     this._clearWarning("richi");
     this._clearWarning("guzen");
     this._clearWarning("dora");
@@ -104,16 +103,16 @@ class EnvInput {
       }
     }
 
-    if (this._env.tenho || this._env.chiho) {
+    if (this._env.tenho) {
       if (this._tehai !== null && this._tehai.agariHai.agari != "!") {
         this._addWarningMessage(
-          "tenho",
+          "guzen",
           "天和/地和が成立するのはツモあがり時のみです",
         );
       }
       if (this._tehai !== null && this._tehai.furo.length > 0) {
         this._addWarningMessage(
-          "tenho",
+          "guzen",
           "副露がある場合天和/地和にはなりません",
         );
       }
@@ -221,11 +220,6 @@ class EnvInput {
   _onChange(target) {
     let { Hai } = this._wasmMod;
     switch (target.name) {
-      case "tenho":
-        if (target.checked) {
-          this._setTenho(target.value);
-        }
-        break;
       case "richi":
         if (target.checked) {
           this._setRichi(target.value);
@@ -234,6 +228,7 @@ class EnvInput {
       case "ippatsu":
       case "rinshan":
       case "haitei":
+      case "tenho":
         this._env[target.name] = target.checked;
         break;
       case "bakaze":
@@ -333,23 +328,6 @@ class EnvInput {
         break;
     }
     this._update();
-  }
-
-  _setTenho(value) {
-    switch (value) {
-      case "tenho":
-        this._env.tenho = true;
-        this._env.chiho = false;
-        break;
-      case "chiho":
-        this._env.tenho = false;
-        this._env.chiho = true;
-        break;
-      default:
-        this._env.tenho = false;
-        this._env.chiho = false;
-        break;
-    }
   }
 
   _setRichi(value) {

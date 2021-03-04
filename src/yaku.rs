@@ -185,8 +185,7 @@ const YAKU_LIST: &[JudgeFn] = &[
 ];
 
 const YAKUMAN_LIST: &[JudgeFn] = &[
-    kokushi, suanko, daisangen, tsuiso, shosushi, daisushi, ryuiso, chinro, sukantsu, churen,
-    tenho, chiho,
+    kokushi, suanko, daisangen, tsuiso, shosushi, daisushi, ryuiso, chinro, sukantsu, churen, tenho,
 ];
 
 const ADDITIONAL_LIST: &[JudgeFn] = &[dora, uradora, akadora];
@@ -558,11 +557,13 @@ fn churen(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
 }
 
 fn tenho(_agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
-    env.tenho.then(|| ("天和", 1))
-}
-
-fn chiho(_agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
-    env.chiho.then(|| ("地和", 1))
+    env.tenho.then(|| {
+        if env.jikaze == env.bakaze {
+            ("天和", 1)
+        } else {
+            ("地和", 1)
+        }
+    })
 }
 
 fn dora(agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
@@ -1354,14 +1355,14 @@ mod test {
     fn tenho() {
         let mut env = Env::new_empty(Hai::from_str("1j").unwrap(), Hai::from_str("1j").unwrap());
         env.tenho = true;
-        assert_eq!(yaku("1112345m345s123p ?6m", &env), "[天和:!1]");
+        assert_eq!(yaku("1112345m345s123p !6m", &env), "[天和:!1]");
     }
 
     #[test]
     fn chiho() {
-        let mut env = Env::new_empty(Hai::from_str("1j").unwrap(), Hai::from_str("1j").unwrap());
-        env.chiho = true;
-        assert_eq!(yaku("1112345m345s123p ?6m", &env), "[地和:!1]");
+        let mut env = Env::new_empty(Hai::from_str("1j").unwrap(), Hai::from_str("2j").unwrap());
+        env.tenho = true;
+        assert_eq!(yaku("1112345m345s123p !6m", &env), "[地和:!1]");
     }
 
     #[test]
