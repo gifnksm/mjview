@@ -79,190 +79,47 @@ class EnvInput {
     this._clearWarning("dora");
     this._clearWarning("uradora");
 
-    let maps = this._emitHaiCountWarning();
-
-    if (this._env.ippatsu) {
-      if (!this._env.richi && !this._env.daburi) {
-        this._addWarningMessage(
-          "guzen",
-          "一発は立直/ダブル立直時のみ成立する役です",
-        );
-      }
-      if (
-        this._env.rinshan &&
-        this._tehai !== null &&
-        this._tehai.agariHai.agari == "!"
-      ) {
-        this._addWarningMessage("guzen", "一発は嶺上開花と複合しません");
-      }
-    }
-
-    if (this._env.richi || this._env.daburi) {
-      if (this._tehai !== null && !this._tehai.isMenzen) {
-        this._addWarningMessage("richi", "立直/ダブル立直は門前時のみできます");
-      }
-    }
-
-    if (this._env.daburi && this._env.ippatsu) {
-      if (this._env.haitei) {
-        this._addWarningMessage(
-          "guzen",
-          "ダブル立直の一発と海底/河底は複合しません",
-        );
-      }
-      if (this._env.doraCount > 1) {
-        this._addWarningMessage(
-          "dora",
-          "ダブル立直の一発の場合ドラ表示牌は必ず1枚です",
-        );
-      }
-    }
-
-    if (this._env.tenho) {
-      if (this._tehai !== null && this._tehai.agariHai.agari !== "!") {
-        this._addWarningMessage(
-          "guzen",
-          "天和/地和が成立するのはツモあがり時のみです",
-        );
-      }
-      if (this._tehai !== null && this._tehai.furo.length > 0) {
-        this._addWarningMessage(
-          "guzen",
-          "副露がある場合天和/地和にはなりません",
-        );
-      }
-      if (this._env.richi || this._env.daburi) {
-        this._addWarningMessage(
-          "richi",
-          "立直/ダブル立直は天和/地和と複合しません",
-        );
-      }
-      if (this._env.rinshan) {
-        this._addWarningMessage(
-          "guzen",
-          "嶺上開花/搶槓は天和/地和と複合しません",
-        );
-      }
-      if (this._env.haitei) {
-        this._addWarningMessage("guzen", "海底/河底は天和/地和と複合しません");
-      }
-    }
-
-    if (
-      this._env.rinshan &&
-      this._tehai !== null &&
-      this._tehai.agariHai.agari === "?"
-    ) {
-      let hai = this._tehai.agariHai.hai;
-      if (maps.tehai.get(hai.toString()) > 1) {
-        this._addWarningMessage(
-          "tehai",
-          "搶槓のあがり牌が純手牌/副露に含まれています",
-        );
-      }
-      if (maps.dora.get(hai.toString()) > 0) {
-        this._addWarningMessage(
-          "dora",
-          "搶槓のあがり牌がドラ表時牌に含まれています",
-        );
-      }
-      if (maps.uradora.get(hai.toString()) > 0) {
-        this._addWarningMessage(
-          "uradora",
-          "搶槓のあがり牌が裏ドラ表時牌に含まれています",
-        );
-      }
-    }
-
-    if (this._env.doraCount == 0) {
-      this._addWarningMessage("dora", "ドラ表示牌が0枚です");
-    } else if (this._env.doraCount > 5) {
-      this._addWarningMessage("dora", "ドラ表示牌が6枚以上あります");
-    }
-
-    if (this._env.richi || this._env.daburi) {
-      if (this._env.doraCount != this._env.uradoraCount) {
-        this._addWarningMessage(
-          "uradora",
-          "ドラ表示牌と裏ドラ表示牌の枚数が異なります",
-        );
-      }
-      if (this._env.uradoraCount == 0) {
-        this._addWarningMessage(
-          "uradora",
-          "立直/ダブル立直していますが裏ドラ表示牌が0枚です",
-        );
-      } else if (this._env.uradoraCount > 5) {
-        this._addWarningMessage("uradora", "裏ドラ表示牌が6枚以上あります");
-      }
-    } else {
-      if (this._env.uradoraCount > 0) {
-        this._addWarningMessage(
-          "uradora",
-          "裏ドラが有効なのは立直/ダブル立直時のみです",
-        );
-      }
-    }
-  }
-
-  _emitHaiCountWarning() {
-    let maps = {
-      all: new Map(),
-      tehai: new Map(),
-      dora: new Map(),
-      uradora: new Map(),
-    };
-    let increment = (map, hai) => {
-      let key = hai.toString();
-      let count = map.get(key);
-      if (count === undefined) {
-        count = 0;
-      }
-      map.set(key, count + 1);
-    };
-
+    let warnings;
     if (this._tehai !== null) {
-      for (let hai of this._tehai.junTehai.toHaiArray()) {
-        increment(maps.tehai, hai);
-        increment(maps.all, hai);
-      }
-      for (let furo of this._tehai.furo) {
-        for (let hai of furo.toHaiArray()) {
-          increment(maps.tehai, hai);
-          increment(maps.all, hai);
-        }
-      }
-      increment(maps.tehai, this._tehai.agariHai.hai);
-      increment(maps.all, this._tehai.agariHai.hai);
+      warnings = this._env.checkPropsWithTehai(this._tehai);
+    } else {
+      warnings = this._env.checkPropsWithoutTehai();
     }
 
-    for (let name of ["dora", "uradora"]) {
-      let map = maps[name];
-      for (let hai of this._env[name]) {
-        increment(map, hai);
-        increment(maps.all, hai);
+    for (let [items, message] of warnings) {
+      let set = new Set();
+      for (let item of items) {
+        switch (item) {
+          case "tehai":
+            set.add("tehai");
+            break;
+          case "richi":
+          case "daburi":
+            set.add("richi");
+            break;
+          case "ippatsu":
+          case "rinshan":
+          case "haitei":
+          case "tenho":
+            set.add("guzen");
+            break;
+          case "bakaze":
+          case "jikaze":
+            throw new Error(`unexpected item: ${item}`);
+          case "dora":
+            set.add("dora");
+            break;
+          case "uradora":
+            set.add("uradora");
+            break;
+          default:
+            throw new Error(`unexpected item: ${item}`);
+        }
+      }
+      for (let category of set.values()) {
+        this._addWarningMessage(category, message);
       }
     }
-    for (let name of ["tehai", "dora", "uradora"]) {
-      let myMap = maps[name];
-      for (let [key, value] of myMap.entries()) {
-        if (value > 4) {
-          this._addWarningMessage(
-            name,
-            `\`${key}\` が5枚以上あります (${value}枚)`,
-          );
-          continue;
-        }
-        let allValue = maps.all.get(key);
-        if (allValue > 4) {
-          this._addWarningMessage(
-            name,
-            `手牌、ドラ表時牌、裏ドラ表示牌合わせて \`${key}\` が5枚以上あります (${allValue}枚)`,
-          );
-        }
-      }
-    }
-    return maps;
   }
 
   _onChange(target) {

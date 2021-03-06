@@ -2,7 +2,7 @@ use enum_iterator::IntoEnumIterator;
 use std::fmt;
 
 /// 牌の種類
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, IntoEnumIterator)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, IntoEnumIterator)]
 pub(crate) enum HaiCategory {
     Manzu, //< 萬子
     Pinzu, //< 筒子

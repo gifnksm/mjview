@@ -15,6 +15,7 @@ lto = true
 
 [dependencies]
 enum-iterator = "0.6.0"
+enumflags2 = "0.7.1"
 js-sys = "0.3.48"
 thiserror = "1.0.24"
 wasm-bindgen = "0.2.71"

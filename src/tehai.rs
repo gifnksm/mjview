@@ -72,11 +72,6 @@ impl Tehai {
         self.to_string()
     }
 
-    #[wasm_bindgen(getter = isMenzen)]
-    pub fn is_menzen_js(&self) -> bool {
-        self.is_menzen()
-    }
-
     #[wasm_bindgen(getter = junTehai)]
     pub fn jun_tehai_js(&self) -> JunTehai {
         self.jun_tehai.clone()
