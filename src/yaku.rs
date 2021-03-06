@@ -9,6 +9,7 @@ use crate::{
     rank::{Rank, RankKind},
 };
 use js_sys::Array;
+use num_bigint::BigUint;
 use std::{borrow::Cow, cmp::Ordering, iter};
 use wasm_bindgen::prelude::*;
 
@@ -16,7 +17,7 @@ use wasm_bindgen::prelude::*;
 #[derive(Debug, Clone)]
 pub struct Yaku {
     name: Cow<'static, str>,
-    point: u32,
+    point: BigUint,
     fu: u32,
     rank: Rank,
     detail: Vec<(&'static str, Rank)>,
@@ -68,8 +69,8 @@ impl Yaku {
     }
 
     #[wasm_bindgen(getter = point)]
-    pub fn point_js(&self) -> u32 {
-        self.point
+    pub fn point_js(&self) -> String {
+        self.point.to_string()
     }
 
     #[wasm_bindgen(getter = fu)]
@@ -105,21 +106,38 @@ impl Yaku {
 }
 
 fn judge(agari: &Agari, env: &Env) -> (Rank, Vec<(&'static str, Rank)>) {
-    if let Some((total, list)) = judge_list(agari, env, &YAKUMAN_LIST, Rank::new_yakuman) {
-        return (Rank::new_yakuman(total), list);
+    let mut total_fan = 0;
+    let mut list = vec![];
+
+    // 役満
+    if let Some((yakuman_count, mut yakuman_list)) =
+        judge_list(agari, env, &YAKUMAN_LIST, Rank::new_yakuman)
+    {
+        if !env.aotenjo {
+            return (Rank::new_yakuman(yakuman_count), yakuman_list);
+        }
+        total_fan += yakuman_count * 13; // 役満は13飜扱い
+        list.append(&mut yakuman_list);
     }
 
-    if let Some((mut total, mut list)) = judge_list(agari, env, &YAKU_LIST, Rank::new_fan) {
+    // 通常の役
+    if let Some((yaku_fan, mut yaku_list)) = judge_list(agari, env, &YAKU_LIST, Rank::new_fan) {
+        total_fan += yaku_fan;
+        list.append(&mut yaku_list);
+    }
+
+    // ドラ
+    if !list.is_empty() {
+        // 他の役がある場合のみカウント
         if let Some((dora_fan, mut dora_list)) =
             judge_list(agari, env, &ADDITIONAL_LIST, Rank::new_fan)
         {
-            total += dora_fan;
+            total_fan += dora_fan;
             list.append(&mut dora_list);
         }
-        return (Rank::new_fan(total), list);
     }
 
-    (Rank::new_fan(0), vec![])
+    (Rank::new_fan(total_fan), list)
 }
 
 fn judge_list(
@@ -139,25 +157,33 @@ fn judge_list(
     (!res.is_empty()).then(|| (total_rank, res))
 }
 
-fn compute_point(agari: &Agari, env: &Env, fu: u32, rank: Rank) -> (Cow<'static, str>, u32) {
-    let (name, base_point) = compute_base_point(fu, rank);
+fn compute_point(agari: &Agari, env: &Env, fu: u32, rank: Rank) -> (Cow<'static, str>, BigUint) {
+    let (name, base_point) = compute_base_point(env, fu, rank);
     let is_oya = env.jikaze.number() == 1;
     let is_ron = agari.tehai().agari_hai().type_() == AgariType::Ron;
-    fn round(point: u32) -> u32 {
-        (point + 99) / 100 * 100
+    fn round(point: BigUint) -> BigUint {
+        (point + 99u32) / 100u32 * 100u32
     }
     let point = match (is_oya, is_ron) {
-        (true, true) => round(base_point * 6),
-        (false, true) => round(base_point * 4),
-        (true, false) => round(base_point * 2) * 3,
-        (false, false) => round(base_point * 2) + round(base_point) * 2,
+        (true, true) => round(base_point * 6u32),
+        (false, true) => round(base_point * 4u32),
+        (true, false) => round(base_point * 2u32) * 3u32,
+        (false, false) => round(&base_point * 2u32) + round(base_point) * 2u32,
     };
 
     (name, point)
 }
 
-fn compute_base_point(fu: u32, rank: Rank) -> (Cow<'static, str>, u32) {
-    match rank.kind() {
+fn compute_base_point(env: &Env, fu: u32, rank: Rank) -> (Cow<'static, str>, BigUint) {
+    if env.aotenjo {
+        match rank.kind() {
+            RankKind::Fan(0) => return ("無役".into(), 0u32.into()),
+            RankKind::Fan(fan) => return ("".into(), fu * BigUint::from(2u32).pow(fan + 2)),
+            RankKind::Yakuman(_) => unreachable!(),
+        }
+    }
+
+    let (name, point) = match rank.kind() {
         RankKind::Fan(0) => ("無役".into(), 0),
         RankKind::Fan(fan) if *fan <= 5 => {
             let base_point = fu * 2u32.pow(fan + 2);
@@ -172,8 +198,9 @@ fn compute_base_point(fu: u32, rank: Rank) -> (Cow<'static, str>, u32) {
         RankKind::Fan(fan) if *fan <= 12 => ("三倍満".into(), 6000),
         RankKind::Fan(_) => ("数え役満".into(), 8000),
         RankKind::Yakuman(1) => ("役満".into(), 8000),
-        RankKind::Yakuman(n) => (format!("{}倍役満", n).into(), n * 8000),
-    }
+        RankKind::Yakuman(n) => (format!("{}倍役満", n).into(), (n * 8000)),
+    };
+    (name, BigUint::from(point))
 }
 
 type JudgeFn = fn(agari: &Agari, env: &Env) -> Option<(&'static str, u32)>;
@@ -198,8 +225,13 @@ fn ippatsu(_agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
     env.ippatsu.then(|| ("一発", 1))
 }
 
-fn tsumo(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
-    (agari.tehai().is_menzen() && agari.tehai().agari_hai().type_() == AgariType::Tsumo)
+fn tsumo(agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
+    // 天和/地和、ツモり四暗刻とは複合しない
+    (!env.tenho
+        && (agari.num_anko() + agari.num_ankan() != 4
+            || matches!(agari.machi_mentsu().kind(), MentsuKind::Toitsu(..)))
+        && agari.tehai().is_menzen()
+        && agari.tehai().agari_hai().type_() == AgariType::Tsumo)
         .then(|| ("門前清自摸和", 1))
 }
 
@@ -224,32 +256,49 @@ fn ipeko(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
 }
 
 fn bakaze(agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
-    yakuhai(agari, |hai| env.bakaze.is_same(&hai)).then(|| ("役牌: 場風牌", 1))
+    if kazehai_bits(agari) == 0b1111 {
+        return None;
+    }
+    let count = yakuhai(agari, |hai| env.bakaze.is_same(&hai));
+    (count > 0).then(|| ("役牌: 場風牌", count as u32))
 }
 
 fn jikaze(agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
-    yakuhai(agari, |hai| env.jikaze.is_same(&hai)).then(|| ("役牌: 自風牌", 1))
+    if kazehai_bits(agari) == 0b1111 {
+        return None;
+    }
+    let count = yakuhai(agari, |hai| env.jikaze.is_same(&hai));
+    (count > 0).then(|| ("役牌: 自風牌", count as u32))
 }
 
 fn haku(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
-    yakuhai(agari, |hai| {
+    if sangenpai_bits(agari) == 0b111 {
+        return None;
+    }
+    let count = yakuhai(agari, |hai| {
         hai.number() == 5 && hai.category() == HaiCategory::Jihai
-    })
-    .then(|| ("役牌: 白", 1))
+    });
+    (count > 0).then(|| ("役牌: 白", count as u32))
 }
 
 fn hatsu(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
-    yakuhai(agari, |hai| {
+    if sangenpai_bits(agari) == 0b111 {
+        return None;
+    }
+    let count = yakuhai(agari, |hai| {
         hai.number() == 6 && hai.category() == HaiCategory::Jihai
-    })
-    .then(|| ("役牌: 發", 1))
+    });
+    (count > 0).then(|| ("役牌: 發", count as u32))
 }
 
 fn chun(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
-    yakuhai(agari, |hai| {
+    if sangenpai_bits(agari) == 0b111 {
+        return None;
+    }
+    let count = yakuhai(agari, |hai| {
         hai.number() == 7 && hai.category() == HaiCategory::Jihai
-    })
-    .then(|| ("役牌: 中", 1))
+    });
+    (count > 0).then(|| ("役牌: 中", count as u32))
 }
 
 fn rinshan(agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
@@ -335,7 +384,12 @@ fn chitoi(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
 }
 
 fn toitoi(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
-    (agari.num_anko() + agari.num_minko() + agari.num_ankan() + agari.num_minkan() == 4)
+    // 四暗刻、四槓子、清老頭、大四喜とは複合しない
+    (agari.num_anko() + agari.num_minko() + agari.num_ankan() + agari.num_minkan() == 4
+        && agari.num_ankan() + agari.num_minkan() < 4
+        && agari.num_anko() < 4
+        && agari.num_yaochuhai() - agari.num_jihai() < agari.num_hai()
+        && kazehai_bits(agari) != 0b1111)
         .then(|| ("対対和", 2))
 }
 
@@ -344,8 +398,11 @@ fn sananko(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
 }
 
 fn honro(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
-    (agari.num_jihai() > 0 && agari.tehai().all_hai().all(|hai| hai.is_yaochuhai()))
-        .then(|| ("混老頭", 2))
+    (agari.num_single() == 0 // 国士無双とは複合しない
+        && agari.num_jihai() > 0
+        && agari.num_jihai() < agari.num_hai()
+        && agari.tehai().all_hai().all(|hai| hai.is_yaochuhai()))
+    .then(|| ("混老頭", 2))
 }
 
 fn sandoko(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
@@ -383,18 +440,8 @@ fn sankantsu(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
 }
 
 fn shosan(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
-    (agari.janto()?.head().is_sangenpai()
-        && agari
-            .all_mentsu()
-            .filter(|mentsu| mentsu.head().is_sangenpai())
-            .filter(|mentsu| {
-                matches!(
-                    mentsu.kind(),
-                    MentsuKind::Kotsu(..) | MentsuKind::Kantsu(..)
-                )
-            })
-            .count()
-            == 2)
+    let janto = agari.janto()?.head();
+    (janto.is_sangenpai() && sangenpai_bits(agari) ^ (1 << (janto.number() - 5)) == 0b111)
         .then(|| ("小三元", 2))
 }
 
@@ -404,6 +451,7 @@ fn daburi(_agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
 
 fn honitsu(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
     (agari.num_jihai() > 0
+        && agari.num_jihai() < agari.num_hai()
         && ((agari.num_jihai() + agari.num_manzu() == agari.num_hai())
             || (agari.num_jihai() + agari.num_souzu() == agari.num_hai())
             || (agari.num_jihai() + agari.num_pinzu() == agari.num_hai())))
@@ -425,7 +473,10 @@ fn ryanpeko(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
     (agari.tehai().is_menzen() && num_peko(agari) == 2).then(|| ("二盃口", 3))
 }
 
-fn chinitsu(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
+fn chinitsu(agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
+    if churen(agari, env).is_some() {
+        return None;
+    }
     (agari.num_manzu() == agari.num_hai()
         || agari.num_pinzu() == agari.num_hai()
         || agari.num_souzu() == agari.num_hai())
@@ -452,19 +503,31 @@ fn suanko(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
     })
 }
 
+fn sangenpai_bits(agari: &Agari) -> u8 {
+    let mut bits = 0;
+    for mentsu in agari.all_mentsu().filter(|mentsu| {
+        matches!(
+            mentsu.kind(),
+            MentsuKind::Kotsu(..) | MentsuKind::Kantsu(..)
+        )
+    }) {
+        let head = mentsu.head();
+        if head.category() != HaiCategory::Jihai {
+            continue;
+        }
+        let bit = match head.number() {
+            5 => 0b001,
+            6 => 0b010,
+            7 => 0b100,
+            _ => continue,
+        };
+        bits |= bit;
+    }
+    bits
+}
+
 fn daisangen(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
-    (agari
-        .all_mentsu()
-        .filter(|mentsu| mentsu.head().is_sangenpai())
-        .filter(|mentsu| {
-            matches!(
-                mentsu.kind(),
-                MentsuKind::Kotsu(..) | MentsuKind::Kantsu(..)
-            )
-        })
-        .count()
-        == 3)
-        .then(|| ("大三元", 1))
+    (sangenpai_bits(agari) == 0b111).then(|| ("大三元", 1))
 }
 
 fn tsuiso(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
@@ -472,34 +535,37 @@ fn tsuiso(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
 }
 
 fn shosushi(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
-    (agari.janto()?.head().is_kazehai()
-        && agari
-            .all_mentsu()
-            .filter(|mentsu| mentsu.head().is_kazehai())
-            .filter(|mentsu| {
-                matches!(
-                    mentsu.kind(),
-                    MentsuKind::Kotsu(..) | MentsuKind::Kantsu(..)
-                )
-            })
-            .count()
-            == 3)
+    let janto = agari.janto()?.head();
+    (janto.is_kazehai() && kazehai_bits(agari) ^ (1 << (janto.number() - 1)) == 0b1111)
         .then(|| ("小四喜", 1))
 }
 
+fn kazehai_bits(agari: &Agari) -> u8 {
+    let mut bits = 0;
+    for mentsu in agari.all_mentsu().filter(|mentsu| {
+        matches!(
+            mentsu.kind(),
+            MentsuKind::Kotsu(..) | MentsuKind::Kantsu(..)
+        )
+    }) {
+        let head = mentsu.head();
+        if head.category() != HaiCategory::Jihai {
+            continue;
+        }
+        let bit = match head.number() {
+            1 => 0b0001,
+            2 => 0b0010,
+            3 => 0b0100,
+            4 => 0b1000,
+            _ => continue,
+        };
+        bits |= bit;
+    }
+    bits
+}
+
 fn daisushi(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
-    (agari
-        .all_mentsu()
-        .filter(|mentsu| mentsu.head().is_kazehai())
-        .filter(|mentsu| {
-            matches!(
-                mentsu.kind(),
-                MentsuKind::Kotsu(..) | MentsuKind::Kantsu(..)
-            )
-        })
-        .count()
-        == 4)
-        .then(|| ("大四喜", 2))
+    (kazehai_bits(agari) == 0b1111).then(|| ("大四喜", 2))
 }
 
 fn ryuiso(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
@@ -515,8 +581,7 @@ fn ryuiso(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
 }
 
 fn chinro(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
-    (agari.num_jihai() == 0 && agari.tehai().all_hai().all(|hai| hai.is_yaochuhai()))
-        .then(|| ("清老頭", 1))
+    (agari.num_jihai() == 0 && agari.num_yaochuhai() == agari.num_hai()).then(|| ("清老頭", 1))
 }
 
 fn sukantsu(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
@@ -623,7 +688,7 @@ fn num_peko(agari: &Agari) -> usize {
         + head_count.iter().filter(|(_, c)| *c > 3).count()
 }
 
-fn yakuhai(agari: &Agari, f: impl Fn(Hai) -> bool) -> bool {
+fn yakuhai(agari: &Agari, f: impl Fn(&Hai) -> bool) -> usize {
     agari
         .all_mentsu()
         .filter(|mentsu| {
@@ -633,7 +698,8 @@ fn yakuhai(agari: &Agari, f: impl Fn(Hai) -> bool) -> bool {
             )
         })
         .map(|mentsu| mentsu.head())
-        .any(f)
+        .filter(f)
+        .count()
 }
 
 #[cfg(test)]
@@ -684,6 +750,16 @@ mod test {
             yaku("345m345p3344588s !5s", &env),
             "[門前清自摸和:1,断么九:1,平和:1,一盃口:1,三色同順:2]",
         );
+
+        // 青天常時、天和/地和とは複合しない
+        let mut env = Env::new_empty(Hai::from_str("1j").unwrap(), Hai::from_str("1j").unwrap());
+        env.tenho = true;
+        env.aotenjo = true;
+        assert_eq!(yaku("345567m1113368s !7s", &env), "[天和:!1]");
+        let mut env = Env::new_empty(Hai::from_str("1j").unwrap(), Hai::from_str("2j").unwrap());
+        env.tenho = true;
+        env.aotenjo = true;
+        assert_eq!(yaku("345567m1113368s !7s", &env), "[地和:!1]");
     }
 
     #[test]
@@ -798,6 +874,11 @@ mod test {
             yaku("345m111j777j3378s ?6s", &env),
             "[役牌: 場風牌:1,役牌: 自風牌:1,役牌: 中:1]",
         );
+
+        // 青天井の場合大三元とは複合しない
+        let mut env = Env::new_empty(Hai::from_str("1j").unwrap(), Hai::from_str("1j").unwrap());
+        env.aotenjo = true;
+        assert_eq!(yaku("33s78p777j ^666j ^555j ?6p", &env), "[大三元:!1]");
     }
 
     #[test]
@@ -950,6 +1031,11 @@ mod test {
         );
         // 七対形のケース
         assert_eq!(yaku("66j1199p99s11m442j ?2j", &env), "[七対子:2,混老頭:2]",);
+
+        // 青天常時、国士無双とは複合しない
+        let mut env = Env::new_empty(Hai::from_str("1j").unwrap(), Hai::from_str("1j").unwrap());
+        env.aotenjo = true;
+        assert_eq!(yaku("19m19s19p1123456j ?7j", &env), "[国士無双:!1]");
     }
 
     #[test]
@@ -1200,6 +1286,18 @@ mod test {
         // 注意を要する単騎待ち
         assert_eq!(yaku("666888s222m1112p ?2p", &env), "[四暗刻単騎:!2]");
         assert_eq!(yaku("666888s222m1112p ?3p", &env), "[三暗刻:2]");
+
+        // 青天井時、三暗刻、対対和とは複合しない
+        let mut env = Env::new_empty(Hai::from_str("1j").unwrap(), Hai::from_str("1j").unwrap());
+        env.aotenjo = true;
+        assert_eq!(yaku("333s111s555m7999p ?7p", &env), "[四暗刻単騎:!2]");
+        // 四暗刻単騎と門前清自摸和は複合する
+        assert_eq!(
+            yaku("333s111s555m7999p !7p", &env),
+            "[四暗刻単騎:!2,門前清自摸和:1]"
+        );
+        // ツモり四暗刻と門前清自摸和は複合しない
+        assert_eq!(yaku("333s111s555m7799p !9p", &env), "[四暗刻:!1]");
     }
 
     #[test]
@@ -1245,6 +1343,16 @@ mod test {
         );
         // 字一色七対子
         assert_eq!(yaku("1122334455667j ?7j", &env), "[字一色:!1]");
+
+        let mut env = Env::new_empty(Hai::from_str("2j").unwrap(), Hai::from_str("2j").unwrap());
+        env.aotenjo = true;
+        // 青天井時、混全帯么九とは複合しない
+        assert_eq!(
+            yaku("1112277j ^444j ^555j ?2j", &env),
+            "[字一色:!1,役牌: 場風牌:1,役牌: 自風牌:1,役牌: 白:1,対対和:2]"
+        );
+        // 青天井時、七対子と複合するassert_eq!(
+        assert_eq!(yaku("1122334455667j ?7j", &env), "[字一色:!1,七対子:2]");
     }
 
     #[test]
@@ -1258,6 +1366,14 @@ mod test {
         // 両面待ちのケース
         assert_eq!(yaku("44j23m <333j >222j ^111j ?1m", &env), "[小四喜:!1]");
         assert_eq!(yaku("44j23m <333j >222j ^111j ?4m", &env), "[小四喜:!1]");
+
+        let mut env = Env::new_empty(Hai::from_str("2j").unwrap(), Hai::from_str("2j").unwrap());
+        env.aotenjo = true;
+        // 青天井時、役牌、混一色と複合する
+        assert_eq!(
+            yaku("1112224j234m <333j !4j", &env),
+            "[小四喜:!1,役牌: 場風牌:1,役牌: 自風牌:1,混一色:2]",
+        );
     }
 
     #[test]
@@ -1270,6 +1386,14 @@ mod test {
         assert_eq!(
             yaku("3334445j >222j ^111j ?5j", &env),
             "[字一色:!1,大四喜:!2]",
+        );
+
+        let mut env = Env::new_empty(Hai::from_str("2j").unwrap(), Hai::from_str("2j").unwrap());
+        env.aotenjo = true;
+        // 青天井時、役牌、対対和とは複合しない
+        assert_eq!(
+            yaku("33344j22s >222j ^111j ?4j", &env),
+            "[大四喜:!2,混一色:2]",
         );
     }
 
@@ -1288,6 +1412,21 @@ mod test {
         // 發のないケース
         assert_eq!(yaku("4466s <888s <333s ^222s ?4s", &env), "[緑一色:!1]");
         assert_eq!(yaku("4466s <888s <333s ^222s ?6s", &env), "[緑一色:!1]");
+
+        let mut env = Env::new_empty(Hai::from_str("2j").unwrap(), Hai::from_str("2j").unwrap());
+        env.aotenjo = true;
+        // 發無し緑一色を認めているため、青天井時は混一色と複合する
+        assert_eq!(yaku("22334466s66j >888s ?6s", &env), "[緑一色:!1,混一色:2]");
+        // 發無し緑一色を認めているため、青天井時は清一色、断么九と複合する
+        assert_eq!(
+            yaku("4466s <888s <333s ^222s ?4s", &env),
+            "[緑一色:!1,断么九:1,対対和:2,清一色:5]",
+        );
+        // 役牌: 發は複合する
+        assert_eq!(
+            yaku("2233446888s <666j ?6s", &env),
+            "[緑一色:!1,役牌: 發:1,混一色:2]",
+        );
     }
 
     #[test]
@@ -1301,6 +1440,11 @@ mod test {
             yaku("111999s999m1119p ?9p", &env),
             "[四暗刻単騎:!2,清老頭:!1]",
         );
+
+        let mut env = Env::new_empty(Hai::from_str("2j").unwrap(), Hai::from_str("2j").unwrap());
+        env.aotenjo = true;
+        // 青天井時、純全帯么九とは複合しない。七対子の4枚使いも認めていないため、対対和とも複合しない
+        assert_eq!(yaku("11s111p11m <999s ^999m ?1s", &env), "[清老頭:!1]");
     }
 
     #[test]
@@ -1308,14 +1452,22 @@ mod test {
         let env = Env::new_empty(Hai::from_str("2j").unwrap(), Hai::from_str("2j").unwrap());
         assert_eq!(
             yaku("1m 5555j 3333j ^7777s ^8888p ?1m", &env),
-            "[四槓子:!1]"
+            "[四槓子:!1]",
         );
 
         // index.html のサンプル
         assert_eq!(
             yaku("1m 9999p ^333+3s >4444j 6666m !1m", &env),
             "[四槓子:!1]",
-        )
+        );
+
+        // 青天井時、三槓子、対対和とは複合しない
+        let mut env = Env::new_empty(Hai::from_str("2j").unwrap(), Hai::from_str("2j").unwrap());
+        env.aotenjo = true;
+        assert_eq!(
+            yaku("1m 5555j 3333j ^7777s ^8888p ?1m", &env),
+            "[四槓子:!1,役牌: 白:1]",
+        );
     }
 
     #[test]
@@ -1349,6 +1501,13 @@ mod test {
             yaku("1112345678999m ?9m", &env),
             "[純正九蓮宝燈:!2][純正九蓮宝燈:!2]",
         );
+
+        let mut env = Env::new_empty(Hai::from_str("2j").unwrap(), Hai::from_str("2j").unwrap());
+        env.aotenjo = true;
+        // 青天井時、清一色とは複合しない
+        assert_eq!(yaku("1113455678999p ?2p", &env), "[九蓮宝燈:!1]");
+        // 一気通貫とは複合する
+        assert_eq!(yaku("1111345678999p ?2p", &env), "[九蓮宝燈:!1,一気通貫:2]");
     }
 
     #[test]

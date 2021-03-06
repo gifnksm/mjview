@@ -21,6 +21,7 @@ enum Item {
     Jikaze,
     Dora,
     Uradora,
+    Aotenjo,
 }
 
 impl Item {
@@ -38,6 +39,7 @@ impl Item {
             Jikaze => "jikaze",
             Dora => "dora",
             Uradora => "uradora",
+            Aotenjo => "aotenjo",
         }
     }
 }
@@ -55,6 +57,7 @@ pub struct Env {
     pub(crate) jikaze: Hai,
     pub(crate) dora: Vec<Hai>,
     pub(crate) uradora: Vec<Hai>,
+    pub(crate) aotenjo: bool,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -79,6 +82,7 @@ impl Env {
             jikaze,
             dora: vec![],
             uradora: vec![],
+            aotenjo: false,
         }
     }
 
@@ -341,6 +345,7 @@ impl Env {
             jikaze: Hai::from_str("1j").unwrap(),
             dora: vec![],
             uradora: vec![],
+            aotenjo: false,
         }
     }
 
@@ -446,6 +451,16 @@ impl Env {
     #[wasm_bindgen(getter = uradora)]
     pub fn uradora_js(&self) -> Box<[JsValue]> {
         self.uradora.iter().copied().map(JsValue::from).collect()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn aotenjo(&self) -> bool {
+        self.aotenjo
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_aotenjo(&mut self, value: bool) {
+        self.aotenjo = value;
     }
 
     fn check_props_common_js(&self, tehai: Option<&Tehai>) -> Box<[JsValue]> {

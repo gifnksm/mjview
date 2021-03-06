@@ -29,6 +29,8 @@ pub struct Agari {
     num_souzu: usize,
     /// 字牌の数
     num_jihai: usize,
+    /// 么九牌の数
+    num_yaochuhai: usize,
     /// 暗順の数
     num_anshun: usize,
     /// 明順の数
@@ -94,6 +96,7 @@ impl Agari {
             .all_hai()
             .filter(|hai| hai.category() == HaiCategory::Jihai)
             .count();
+        let num_yaochuhai = tehai.all_hai().filter(|hai| hai.is_yaochuhai()).count();
         let num_anshun = tehai_mentsu
             .iter()
             .enumerate()
@@ -186,6 +189,7 @@ impl Agari {
             num_pinzu,
             num_souzu,
             num_jihai,
+            num_yaochuhai,
             num_anshun,
             num_minshun,
             num_anko,
@@ -243,6 +247,10 @@ impl Agari {
 
     pub(crate) fn num_jihai(&self) -> usize {
         self.num_jihai
+    }
+
+    pub(crate) fn num_yaochuhai(&self) -> usize {
+        self.num_yaochuhai
     }
 
     pub(crate) fn num_anshun(&self) -> usize {

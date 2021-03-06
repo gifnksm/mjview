@@ -134,6 +134,7 @@ class EnvInput {
       case "rinshan":
       case "haitei":
       case "tenho":
+      case "aotenjo":
         this._env[target.name] = target.checked;
         break;
       case "bakaze":
