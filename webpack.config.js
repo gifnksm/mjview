@@ -15,13 +15,14 @@ module.exports = {
   },
   devServer: {
     contentBase: dist,
+    publicPath: "/mjview/",
+    openPage: "mjview/",
   },
   experiments: {
     asyncWebAssembly: true,
   },
   plugins: [
     new CopyPlugin({ patterns: [path.resolve(__dirname, "static")] }),
-
     new WasmPackPlugin({
       crateDirectory: __dirname,
     }),

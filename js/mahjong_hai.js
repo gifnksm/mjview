@@ -38,7 +38,11 @@ class MahjongHai extends HTMLElement {
     let imgElem = shadow.querySelector("img");
 
     let hai = this.getAttribute("hai");
-    imgElem.src = `image/paiga/${hai}.png`;
+    if (hai !== null) {
+      imgElem.src = `image/paiga/${hai}.png`;
+    } else {
+      imgElem.src = null;
+    }
     imgElem.alt = hai;
     imgElem.title = hai;
   }
@@ -50,7 +54,7 @@ function prefetchHai(hai) {
   let link = document.createElement("link");
   link.rel = "prefetch";
   link.as = "image";
-  link.href = `/image/paiga/${hai}.png`;
+  link.href = `image/paiga/${hai}.png`;
   document.head.appendChild(link);
 }
 
