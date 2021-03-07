@@ -3,11 +3,26 @@ import "./mahjong_tehai";
 import "./mahjong_furo";
 
 class EnvInput {
-  constructor(wasmMod, form, tehaiElement, messageElement) {
+  constructor(wasmMod, form, tehaiElement, outputElement) {
     this._wasmMod = wasmMod;
     this._form = form;
     this._tehaiElement = tehaiElement;
-    this._messageElement = messageElement;
+    this._outputElement = outputElement;
+    this._messageElementMap = new Map();
+    this._messageElements = new Set();
+
+    for (let elem of form.elements) {
+      let name = elem.name;
+      let base = elem.parentNode;
+      while (base.nodeName != "TD") {
+        base = base.parentNode;
+      }
+      let message = base.querySelector("ul:last-child[id$=-message]");
+      this._messageElementMap.set(name, message);
+      if (message !== null) {
+        this._messageElements.add(message);
+      }
+    }
 
     this._tehai = null;
     let { Env } = wasmMod;
@@ -26,16 +41,8 @@ class EnvInput {
     form.addEventListener("input", (e) => this._onInput(e.target));
   }
 
-  get tehai() {
-    return this._tehai;
-  }
-
-  get env() {
-    return this._env;
-  }
-
   _update() {
-    this._messageElement.textContent = "";
+    this._outputElement.textContent = "";
     this._updateWarning();
 
     let tehai = this._tehai;
@@ -69,15 +76,13 @@ class EnvInput {
       body.appendChild(ul);
       list.appendChild(body);
     }
-    this._messageElement.appendChild(list);
+    this._outputElement.appendChild(list);
   }
 
   _updateWarning() {
-    this._clearWarning("tehai");
-    this._clearWarning("richi");
-    this._clearWarning("guzen");
-    this._clearWarning("dora");
-    this._clearWarning("uradora");
+    for (let elem of this._messageElements) {
+      this._clearWarning(elem);
+    }
 
     let warnings;
     if (this._tehai !== null) {
@@ -89,35 +94,11 @@ class EnvInput {
     for (let [items, message] of warnings) {
       let set = new Set();
       for (let item of items) {
-        switch (item) {
-          case "tehai":
-            set.add("tehai");
-            break;
-          case "richi":
-          case "daburi":
-            set.add("richi");
-            break;
-          case "ippatsu":
-          case "rinshan":
-          case "haitei":
-          case "tenho":
-            set.add("guzen");
-            break;
-          case "bakaze":
-          case "jikaze":
-            throw new Error(`unexpected item: ${item}`);
-          case "dora":
-            set.add("dora");
-            break;
-          case "uradora":
-            set.add("uradora");
-            break;
-          default:
-            throw new Error(`unexpected item: ${item}`);
-        }
+        let messageElement = this._messageElementMap.get(item);
+        set.add(messageElement);
       }
-      for (let category of set.values()) {
-        this._addWarningMessage(category, message);
+      for (let element of set.values()) {
+        this._addWarningMessage(element, message);
       }
     }
   }
@@ -147,19 +128,13 @@ class EnvInput {
     this._update();
   }
 
-  _removeMessageClass(name) {
-    let element = document.getElementById(`${name}-message`);
-    element.classList.remove("ok");
-    element.classList.remove("warning");
-    element.classList.remove("error");
-  }
-
-  _addMessage(name, addClass, message, clear) {
-    let element = document.getElementById(`${name}-message`);
+  _addMessage(element, addClass, message, clear) {
     if (!element.classList.contains(addClass)) {
       element.textContent = "";
     }
-    this._removeMessageClass(name);
+    element.classList.remove("ok");
+    element.classList.remove("warning");
+    element.classList.remove("error");
     element.classList.add(addClass);
     if (clear) {
       element.textContent = "";
@@ -169,53 +144,53 @@ class EnvInput {
     element.appendChild(li);
   }
 
-  _setOKMessage(name) {
-    this._addMessage(name, "ok", "OK", true);
+  _setOKMessage(element) {
+    this._addMessage(element, "ok", "OK", true);
   }
 
-  _clearWarning(name) {
-    let element = document.getElementById(`${name}-message`);
+  _clearWarning(element) {
     if (element.classList.contains("warning")) {
       element.classList.remove("warning");
       element.textContent = "";
     }
     if (!element.classList.contains("error")) {
-      this._setOKMessage(name);
+      this._setOKMessage(element);
     }
   }
 
-  _addWarningMessage(name, message) {
-    let element = document.getElementById(`${name}-message`);
+  _addWarningMessage(element, message) {
     if (element.classList.contains("error")) {
       return;
     }
-    this._addMessage(name, "warning", message, false);
+    this._addMessage(element, "warning", message, false);
   }
 
-  _setErrorMessage(name, message) {
-    this._clearWarning(name);
-    this._addMessage(name, "error", message, true);
+  _setErrorMessage(element, message) {
+    this._clearWarning(element);
+    this._addMessage(element, "error", message, true);
   }
 
   _onInput(target) {
     switch (target.name) {
       case "tehai": {
         let tehai = target.value;
+        let messageElement = this._messageElementMap.get(target.name);
         this._tehaiElement.tehai = tehai;
         let { Tehai } = this._wasmMod;
         try {
           this._tehai = Tehai.fromStr(tehai);
           target.setCustomValidity("");
-          this._setOKMessage(target.name);
+          this._setOKMessage(messageElement);
         } catch (err) {
           this._tehai = null;
           target.setCustomValidity(err.toString());
-          this._setErrorMessage(target.name, err.toString());
+          this._setErrorMessage(messageElement, err.toString());
         }
         break;
       }
       case "dora":
       case "uradora": {
+        let messageElement = this._messageElementMap.get(target.name);
         try {
           if (target.name === "dora") {
             this._env.setDora(target.value);
@@ -223,10 +198,10 @@ class EnvInput {
             this._env.setUradora(target.value);
           }
           target.setCustomValidity("");
-          this._setOKMessage(target.name);
+          this._setOKMessage(messageElement);
         } catch (err) {
           target.setCustomValidity(err.toString());
-          this._setErrorMessage(target.name, err.toString());
+          this._setErrorMessage(messageElement, err.toString());
         }
         break;
       }
@@ -247,6 +222,6 @@ async function main() {
     wasmMod,
     document.forms[0],
     document.getElementById("tehai-view"),
-    document.getElementById("message"),
+    document.getElementById("output"),
   );
 }
