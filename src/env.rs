@@ -12,7 +12,6 @@ use wasm_bindgen::prelude::*;
 enum Item {
     Tehai,
     Richi,
-    Daburi,
     Ippatsu,
     Rinshan,
     Haitei,
@@ -30,7 +29,6 @@ impl Item {
         match self {
             Tehai => "tehai",
             Richi => "richi",
-            Daburi => "daburi",
             Ippatsu => "ippatsu",
             Rinshan => "rinshan",
             Haitei => "haitei",
@@ -44,11 +42,27 @@ impl Item {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum RichiType {
+    /// 立直
+    Richi,
+    /// ダブル立直
+    Daburi,
+}
+
+impl RichiType {
+    fn as_str(&self) -> &'static str {
+        match self {
+            RichiType::Richi => "richi",
+            RichiType::Daburi => "daburi",
+        }
+    }
+}
+
 #[wasm_bindgen]
 #[derive(Debug, Clone)]
 pub struct Env {
-    pub(crate) richi: bool,
-    pub(crate) daburi: bool,
+    pub(crate) richi: Option<RichiType>,
     pub(crate) ippatsu: bool,
     pub(crate) rinshan: bool,
     pub(crate) haitei: bool,
@@ -72,8 +86,7 @@ impl Env {
     #[cfg(test)]
     pub(crate) fn new_empty(bakaze: Hai, jikaze: Hai) -> Env {
         Env {
-            richi: false,
-            daburi: false,
+            richi: None,
             ippatsu: false,
             rinshan: false,
             haitei: false,
@@ -87,11 +100,11 @@ impl Env {
     }
 
     fn check_props(&self, tehai: Option<&Tehai>) -> Vec<(BitFlags<Item>, String)> {
-        use {AgariType::*, Item::*};
+        use {AgariType::*, Item::*, RichiType as RT};
 
         let mut res = vec![];
 
-        let any_richi = self.richi || self.daburi;
+        let any_richi = self.richi.is_some();
         let agari_type = tehai.map(|tehai| tehai.agari_hai().type_());
         let agari_hai = tehai.map(|tehai| tehai.agari_hai().hai());
         let menzen = tehai.map(|tehai| tehai.is_menzen()).unwrap_or_default();
@@ -111,12 +124,10 @@ impl Env {
             Some(Ron) => "搶槓",
             None => "嶺上開花/搶槓",
         };
-        let richi_name = if self.richi {
-            "立直"
-        } else if self.daburi {
-            "ダブル立直"
-        } else {
-            "立直/ダブル立直"
+        let richi_name = match self.richi {
+            Some(RT::Richi) => "立直",
+            Some(RT::Daburi) => "ダブル立直",
+            None => "立直/ダブル立直",
         };
 
         let hai_count = self.check_hai_count(tehai, &mut res);
@@ -124,23 +135,17 @@ impl Env {
         if self.ippatsu {
             let item = Ippatsu;
             if !any_richi {
-                res.push((
-                    item | Richi | Daburi,
-                    "一発は立直/ダブル立直時のみ成立します".into(),
-                ));
+                res.push((item | Richi, "一発は立直/ダブル立直時のみ成立します".into()));
             }
             if self.rinshan && agari_type == Some(Tsumo) {
                 res.push((item | Rinshan, "一発と嶺上開花は複合しません".into()));
             }
         }
-        if self.richi && !menzen {
-            res.push((Richi | Tehai, "立直は門前時のみ可能です".into()));
+        if self.richi.is_some() && !menzen {
+            res.push((Tehai | Richi, format!("{}は門前時のみ可能です", richi_name)));
         }
-        if self.daburi && !menzen {
-            res.push((Daburi | Tehai, "ダブル立直は門前時のみ可能です".into()));
-        }
-        if self.daburi && self.ippatsu {
-            let item = Daburi | Ippatsu;
+        if self.richi == Some(RT::Daburi) && self.ippatsu {
+            let item = Richi | Ippatsu;
             if self.haitei {
                 res.push((
                     item | Haitei,
@@ -168,13 +173,10 @@ impl Env {
                     format!("副露がある場合{}にはなりません", tenho_name),
                 ));
             }
-            if self.richi {
-                res.push((item | Richi, format!("{}と立直は複合しません", tenho_name)));
-            }
-            if self.daburi {
+            if self.richi.is_some() {
                 res.push((
-                    item | Daburi,
-                    format!("{}とダブル立直は複合しません", tenho_name),
+                    item | Richi,
+                    format!("{}と{}は複合しません", tenho_name, richi_name),
                 ));
             }
             if self.rinshan {
@@ -335,8 +337,7 @@ impl Env {
     #[wasm_bindgen(constructor)]
     pub fn new_js() -> Env {
         Env {
-            richi: false,
-            daburi: false,
+            richi: None,
             ippatsu: false,
             rinshan: false,
             haitei: false,
@@ -350,23 +351,20 @@ impl Env {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn richi(&self) -> bool {
+    pub fn richi(&self) -> String {
         self.richi
+            .map(|r| r.as_str().to_string())
+            .unwrap_or_default()
     }
 
     #[wasm_bindgen(setter)]
-    pub fn set_richi(&mut self, value: bool) {
-        self.richi = value;
-    }
-
-    #[wasm_bindgen(getter = daburi)]
-    pub fn daburi(&self) -> bool {
-        self.daburi
-    }
-
-    #[wasm_bindgen(setter = daburi)]
-    pub fn set_daburi(&mut self, value: bool) {
-        self.daburi = value;
+    pub fn set_richi(&mut self, value: &str) {
+        self.richi = match value {
+            "richi" => Some(RichiType::Richi),
+            "daburi" => Some(RichiType::Daburi),
+            "" => None,
+            _ => panic!("Invalid richi type str: {}", value),
+        };
     }
 
     #[wasm_bindgen(getter)]

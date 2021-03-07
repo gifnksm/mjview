@@ -127,7 +127,7 @@ class EnvInput {
     switch (target.name) {
       case "richi":
         if (target.checked) {
-          this._setRichi(target.value);
+          this._env[target.name] = target.value;
         }
         break;
       case "ippatsu":
@@ -234,23 +234,6 @@ class EnvInput {
         break;
     }
     this._update();
-  }
-
-  _setRichi(value) {
-    switch (value) {
-      case "richi":
-        this._env.richi = true;
-        this._env.daburi = false;
-        break;
-      case "daburi":
-        this._env.richi = false;
-        this._env.daburi = true;
-        break;
-      default:
-        this._env.richi = false;
-        this._env.daburi = false;
-        break;
-    }
   }
 }
 

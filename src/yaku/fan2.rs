@@ -1,5 +1,10 @@
 use super::common;
-use crate::{agari::Agari, env::Env, hai_category::HaiCategory, mentsu::MentsuKind};
+use crate::{
+    agari::Agari,
+    env::{Env, RichiType},
+    hai_category::HaiCategory,
+    mentsu::MentsuKind,
+};
 
 pub(super) fn sanshoku(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
     let shuntsu_heads = agari
@@ -127,7 +132,7 @@ pub(super) fn shosan(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> {
 }
 
 pub(super) fn daburi(_agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
-    env.daburi.then(|| ("ダブル立直", 2))
+    (env.richi == Some(RichiType::Daburi)).then(|| ("ダブル立直", 2))
 }
 
 #[cfg(test)]
@@ -341,7 +346,7 @@ mod test {
     #[test]
     fn daburi() {
         let mut env = Env::new_empty(Hai::from_str("1j").unwrap(), Hai::from_str("1j").unwrap());
-        env.daburi = true;
+        env.richi = Some(RichiType::Daburi);
         assert_eq!(yaku("1112345m345s123p ?6m", &env), "[平和:1,ダブル立直:2]");
     }
 }

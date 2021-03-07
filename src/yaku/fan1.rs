@@ -1,11 +1,16 @@
 use super::common;
 use crate::{
-    agari::Agari, agari_type::AgariType, env::Env, hai::Hai, hai_category::HaiCategory,
-    machi::Machi, mentsu::MentsuKind,
+    agari::Agari,
+    agari_type::AgariType,
+    env::{Env, RichiType},
+    hai::Hai,
+    hai_category::HaiCategory,
+    machi::Machi,
+    mentsu::MentsuKind,
 };
 
 pub(super) fn richi(_agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
-    env.richi.then(|| ("立直", 1))
+    (env.richi == Some(RichiType::Richi)).then(|| ("立直", 1))
 }
 
 pub(super) fn ippatsu(_agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
@@ -130,14 +135,14 @@ mod test {
     #[test]
     fn rich() {
         let mut env = Env::new_empty(Hai::from_str("1j").unwrap(), Hai::from_str("1j").unwrap());
-        env.richi = true;
+        env.richi = Some(RichiType::Richi);
         assert_eq!(yaku("344556m24678s66j ?3s", &env), "[立直:1]");
     }
 
     #[test]
     fn ippatsu() {
         let mut env = Env::new_empty(Hai::from_str("1j").unwrap(), Hai::from_str("1j").unwrap());
-        env.richi = true;
+        env.richi = Some(RichiType::Richi);
         env.ippatsu = true;
         assert_eq!(yaku("1112345m345s123p ?6m", &env), "[立直:1,一発:1,平和:1]");
     }

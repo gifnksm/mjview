@@ -10,9 +10,7 @@ pub(super) fn dora(agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
 }
 
 pub(super) fn uradora(agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
-    if !env.richi && !env.daburi {
-        return None;
-    }
+    let _ = env.richi?;
     let count = agari
         .tehai()
         .all_hai()
@@ -34,7 +32,7 @@ pub(super) fn akadora(agari: &Agari, _env: &Env) -> Option<(&'static str, u32)> 
 #[cfg(test)]
 mod test {
     use super::{super::common::test::yaku, *};
-    use crate::hai::Hai;
+    use crate::{env::RichiType, hai::Hai};
     use std::str::FromStr;
 
     #[test]
@@ -73,14 +71,14 @@ mod test {
         let mut env = Env::new_empty(Hai::from_str("1j").unwrap(), Hai::from_str("1j").unwrap());
 
         env.uradora = vec![Hai::from_str("1m").unwrap(), Hai::from_str("5m").unwrap()];
-        env.richi = true;
+        env.richi = Some(RichiType::Richi);
         assert_eq!(
             yaku("1112345m345s123p ?6m", &env),
             "[立直:1,平和:1,裏ドラ:2]"
         );
 
         // 立直していない場合は裏ドラはつかない
-        env.richi = false;
+        env.richi = None;
         assert_eq!(yaku("1112345m345s123p ?6m", &env), "[平和:1]");
 
         // 無役の場合はドラはつかない
