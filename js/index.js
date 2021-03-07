@@ -28,6 +28,15 @@ class EnvInput {
     let { Env } = wasmMod;
     this._env = new Env();
 
+    for (let [name, value] of new URLSearchParams(location.search)) {
+      let element = this._form[name];
+      if (element.type == "checkbox") {
+        element.checked = true;
+      } else {
+        element.value = value;
+      }
+    }
+
     for (let element of form.elements) {
       this._onChange(element);
       this._onInput(element);
@@ -77,6 +86,10 @@ class EnvInput {
       list.appendChild(body);
     }
     this._outputElement.appendChild(list);
+
+    let formData = new FormData(this._form);
+    let params = new URLSearchParams(formData);
+    history.replaceState(null, null, `?${params}`);
   }
 
   _updateWarning() {
