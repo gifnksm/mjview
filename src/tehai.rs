@@ -122,6 +122,8 @@ enum ParseErrorKind {
     Furo(#[from] <Furo as FromStr>::Err),
     #[error("あがり牌のパースエラー: {0}")]
     AgariHai(#[from] <AgariHai as FromStr>::Err),
+    #[error("あがり牌が複数あります: `{0}`, `{1}")]
+    MultipleAgariHai(AgariHai, AgariHai),
 }
 
 impl FromStr for Tehai {
@@ -129,22 +131,26 @@ impl FromStr for Tehai {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use ParseErrorKind as E;
-        let mut chunks = s.split_whitespace().peekable();
+        let mut chunks = s.split_whitespace();
 
         let tehai_chunk = chunks.next().ok_or(E::NoJunTehai)?;
         let jun_tehai = JunTehai::from_str(tehai_chunk).map_err(E::from)?;
 
         let mut furo = vec![];
-        while let Some(chunk) = chunks.peek() {
+        let mut agari_hai = None;
+        for chunk in chunks {
             if AgariType::is_agari_str(chunk) {
-                break;
+                let new_agari_hai = AgariHai::from_str(chunk).map_err(E::from)?;
+                if let Some(old_agari_hai) = agari_hai {
+                    return Err(E::MultipleAgariHai(old_agari_hai, new_agari_hai).into());
+                }
+                agari_hai = Some(new_agari_hai);
+            } else {
+                furo.push(Furo::from_str(chunk).map_err(E::from)?);
             }
-            let chunk = chunks.next().unwrap();
-            furo.push(Furo::from_str(chunk).map_err(E::from)?);
         }
 
-        let agari_chunk = chunks.next().ok_or(E::NoAgariHai)?;
-        let agari_hai = AgariHai::from_str(agari_chunk).map_err(E::from)?;
+        let agari_hai = agari_hai.ok_or(E::NoAgariHai)?;
 
         let hai_count = jun_tehai.as_slice().len() + furo.len() * 3 + 1;
         match hai_count.cmp(&14) {
@@ -158,5 +164,52 @@ impl FromStr for Tehai {
             furo,
             agari_hai,
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use assert_matches::assert_matches;
+
+    #[test]
+    fn parse() {
+        use ParseErrorKind::*;
+        fn ok(s: &str) -> String {
+            Tehai::from_str(s).unwrap().to_string()
+        }
+        fn err(s: &str) -> ParseErrorKind {
+            Tehai::from_str(s).unwrap_err().0
+        }
+        macro_rules! h {
+            ($expected:expr, $($expr:expr),*) => {
+                {
+                    assert_eq!($expected, [$($expr.to_string()),*].join(""));
+                    true
+                }
+            }
+        }
+
+        assert_eq!(
+            ok("123m4p <555m <666m <777m ?4p"),
+            "123m4p <555m <666m <777m ?4p",
+        );
+        assert_eq!(
+            ok("123m4p <555m !4p <666m <777m"),
+            "123m4p <555m <666m <777m !4p",
+        );
+        assert_eq!(
+            ok("12m44p ?3m <555m <666m <777m"),
+            "12m44p <555m <666m <777m ?3m",
+        );
+
+        assert_matches!(err(""), NoJunTehai);
+        assert_matches!(err("123p"), NoAgariHai);
+        assert_matches!(err("11122233344455m ?5m"), Tahai(15));
+        assert_matches!(err("11122233344m ?4m"), Shohai(12));
+        assert_matches!(err("x"), JunTehai(..));
+        assert_matches!(err("123m <x"), Furo(..));
+        assert_matches!(err("123m ?x"), AgariHai(..));
+        assert_matches!(err("123m ?4m !4m"), MultipleAgariHai(a, b) if h!("?4m!4m", a, b));
     }
 }
