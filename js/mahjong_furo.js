@@ -60,25 +60,26 @@ class MahjongFuro extends HTMLElement {
   }
 }
 
-function mjHai(hai) {
+function mjHai(hai, sideways) {
   let elem = document.createElement("mj-hai");
   elem.hai = hai;
+  elem.sideways = sideways;
   return elem;
 }
 
 function haiImage(hai) {
   switch (hai.type) {
     case "normal":
-      return mjHai(hai.hai);
+      return mjHai(hai.hai, false);
     case "sideways":
-      return mjHai(`y_${hai.hai}`);
+      return mjHai(`${hai.hai}`, true);
     case "hidden":
-      return mjHai("_");
+      return mjHai("_", false);
     case "stack": {
-      let top = mjHai(`y_${hai.top}`);
+      let top = mjHai(`${hai.top}`, true);
       top.classList.add("stack-top");
 
-      let bottom = mjHai(`y_${hai.bottom}`);
+      let bottom = mjHai(`${hai.bottom}`, true);
       bottom.classList.add("stack-bottom");
 
       let stack = document.createElement("span");
