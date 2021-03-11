@@ -92,7 +92,7 @@ for (let i = 1; i <= 7; i++) {
 prefetchHai("_");
 
 const HAI_STYLE = `
-* {
+:host {
   --hai-width: 30px;
   --hai-height: calc(var(--hai-width) / 3 * 4);
 }
