@@ -6,38 +6,36 @@ cd "$(readlink -f $(dirname $0)/..)"
 temp=$(mktemp -d)
 trap "rm -rf \"${temp}\"" EXIT
 
-wget 'http://ancoroking.world.coocan.jp/download/paiga_yellow.zip' -O "${temp}/paiga_yellow.zip"
-unzip "${temp}/paiga_yellow.zip" -d "${temp}/"
+wget 'https://github.com/FluffyStuff/riichi-mahjong-tiles/archive/master.zip' -O "${temp}/master.zip"
+unzip "${temp}/master.zip" -d "${temp}/"
 
-src_dir="${temp}/paiga_yellow"
-dst_dir='./static/image/paiga/'
+src_dir="${temp}/riichi-mahjong-tiles-master/Regular"
+dst_dir='./static/image/paiga'
 
-rm -rf "${dst_dir}"/*.png
+rm -rf "${dst_dir}"/*.svg
 
 names=(
-    'm5a:5\$m'
-    'p5a:5\$p'
-    's5a:5\$s'
-    'ton:1j'
-    'nan:2j'
-    'sha:3j'
-    'pei:4j'
-    'hak:5j'
-    'hat:6j'
-    'chu:7j'
-    'ura:_'
+    'Man5-Dora:5\$m'
+    'Pin5-Dora:5\$p'
+    'Sou5-Dora:5\$s'
+    'Ton:1j'
+    'Nan:2j'
+    'Shaa:3j'
+    'Pei:4j'
+    'Haku:5j'
+    'Hatsu:6j'
+    'Chun:7j'
+    'Back:_'
 )
 
-for cat in m p s; do
+for cat in Man:m Pin:p Sou:s; do
+    IFS=: read src_cat dst_cat <<< "${cat}"
     for n in $(seq 1 9); do
-        names+=("${cat}${n}:${n}${cat}")
+        names+=("${src_cat}${n}:${n}${dst_cat}")
     done
 done
 
 for pair in "${names[@]}"; do
     IFS=: read src_name dst_name <<< "${pair}"
-    convert "${src_dir}/${src_name}.gif" -trim -strip "${dst_dir}/${dst_name}.png"
-    if [ -e "${src_dir}/y_${src_name}.gif" ]; then
-        convert "${src_dir}/y_${src_name}.gif" -trim -strip "${dst_dir}/y_${dst_name}.png"
-    fi
+    cp -v "${src_dir}/${src_name}.svg" "${dst_dir}/${dst_name}.svg"
 done

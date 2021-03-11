@@ -115,8 +115,8 @@ function haiImage(hai) {
 const TEHAI_STYLE = `
 .tehai {
   display: table-cell;
-  width: 500px;
-  height: 44px;
+  width: 800px;
+  height: 60px;
   padding: 5px;
   background-color: green;
   color: white;
@@ -126,7 +126,7 @@ mj-furo,
 .jun-tehai,
 .agari-hai {
   display: table-cell;
-  line-height: 44px;
+  line-height: 60px;
 }
 .jun-tehai {
   float: left;
