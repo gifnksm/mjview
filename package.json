@@ -13,11 +13,11 @@
   "devDependencies": {
     "@wasm-tool/wasm-pack-plugin": "^1.3.3",
     "copy-webpack-plugin": "^8.0.0",
-    "eslint": "^7.21.0",
+    "eslint": "^7.22.0",
     "htmlhint": "^0.14.2",
     "prettier": "^2.2.1",
     "rimraf": "^3.0.2",
-    "webpack": "^5.24.4",
+    "webpack": "^5.25.1",
     "webpack-cli": "^4.5.0",
     "webpack-dev-server": "^3.11.2"
   }
