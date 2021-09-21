@@ -9,7 +9,7 @@ jobs:
       - name: Setup nodejs
         uses: actions/setup-node@v2
         with:
-          node-version: "15"
+          node-version: "16"
       - name: Setup rust toolchain
         uses: actions-rs/toolchain@v1
         with:
