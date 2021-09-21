@@ -9,7 +9,7 @@ pub(crate) enum AgariType {
 }
 
 impl AgariType {
-    pub(crate) fn to_str(&self) -> &'static str {
+    pub(crate) fn to_str(self) -> &'static str {
         match self {
             Self::Tsumo => "!",
             Self::Ron => "?",

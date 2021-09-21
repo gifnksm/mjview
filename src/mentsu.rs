@@ -75,7 +75,7 @@ impl Mentsu {
         self.as_slice().iter().copied()
     }
 
-    fn to_hai_vec(&self) -> HaiVec {
+    fn to_hai_vec(self) -> HaiVec {
         let t = HaiWithAttr::FromTehai;
         match self.0 {
             MentsuKind::Shuntsu([h0, h1, h2]) | MentsuKind::Kotsu([h0, h1, h2]) => {
@@ -87,7 +87,7 @@ impl Mentsu {
         }
     }
 
-    pub(crate) fn to_machi(&self, agari: Hai) -> Option<Machi> {
+    pub(crate) fn to_machi(self, agari: Hai) -> Option<Machi> {
         match self.0 {
             MentsuKind::Shuntsu([h0, h1, h2]) => {
                 if h2.is_same(&agari) {
@@ -147,7 +147,7 @@ impl Mentsu {
 #[wasm_bindgen]
 impl Mentsu {
     #[wasm_bindgen(js_name = "toString")]
-    pub fn to_string_js(&self) -> String {
+    pub fn to_string_js(self) -> String {
         self.to_string()
     }
 }

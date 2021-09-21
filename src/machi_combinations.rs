@@ -32,7 +32,7 @@ where
     type Item = (usize, Machi);
 
     fn next(&mut self) -> Option<Self::Item> {
-        while let Some((idx, mentsu)) = self.mentsu.next() {
+        for (idx, mentsu) in &mut self.mentsu {
             if self.last == Some(mentsu) {
                 continue;
             }

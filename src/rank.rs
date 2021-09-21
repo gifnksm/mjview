@@ -55,7 +55,7 @@ impl Rank {
     }
 
     #[wasm_bindgen(js_name = toString)]
-    pub fn to_string_js(&self) -> String {
+    pub fn to_string_js(self) -> String {
         self.to_string()
     }
 }

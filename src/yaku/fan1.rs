@@ -51,7 +51,7 @@ pub(super) fn bakaze(agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
     if common::kazehai_bits(agari) == 0b1111 {
         return None;
     }
-    let count = yakuhai(agari, |hai| env.bakaze.is_same(&hai));
+    let count = yakuhai(agari, |hai| env.bakaze.is_same(hai));
     (count > 0).then(|| ("役牌: 場風牌", count as u32))
 }
 
@@ -59,7 +59,7 @@ pub(super) fn jikaze(agari: &Agari, env: &Env) -> Option<(&'static str, u32)> {
     if common::kazehai_bits(agari) == 0b1111 {
         return None;
     }
-    let count = yakuhai(agari, |hai| env.jikaze.is_same(&hai));
+    let count = yakuhai(agari, |hai| env.jikaze.is_same(hai));
     (count > 0).then(|| ("役牌: 自風牌", count as u32))
 }
 

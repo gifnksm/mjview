@@ -64,7 +64,7 @@ impl FromStr for AgariHai {
 }
 
 impl AgariHai {
-    fn to_image(&self) -> HaiImage {
+    fn to_image(self) -> HaiImage {
         HaiImage::normal(self.hai)
     }
 }
@@ -82,7 +82,7 @@ impl AgariHai {
     }
 
     #[wasm_bindgen(js_name = "toImage")]
-    pub fn to_image_js(&self) -> HaiImage {
+    pub fn to_image_js(self) -> HaiImage {
         self.to_image()
     }
 }

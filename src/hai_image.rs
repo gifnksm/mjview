@@ -73,7 +73,7 @@ impl HaiImage {
     }
 
     #[wasm_bindgen(js_name = "toString")]
-    pub fn to_string_js(&self) -> String {
+    pub fn to_string_js(self) -> String {
         match self.0 {
             HaiImageKind::Normal(hai) => hai.to_string(),
             HaiImageKind::Sideways(hai) => format!("y_{}", hai.to_string()),

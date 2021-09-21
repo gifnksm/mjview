@@ -19,7 +19,7 @@ impl fmt::Display for Tacha {
 }
 
 impl Tacha {
-    pub(crate) fn to_str(&self) -> &'static str {
+    pub(crate) fn to_str(self) -> &'static str {
         use Tacha::*;
         match self {
             Kamicha => "<",

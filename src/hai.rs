@@ -118,7 +118,7 @@ impl Hai {
         self.category == HaiCategory::Jihai && (5..=7).contains(&self.number)
     }
 
-    pub(crate) fn to_dora_str(&self) -> &'static str {
+    pub(crate) fn to_dora_str(self) -> &'static str {
         if self.akadora {
             "$"
         } else {
@@ -130,7 +130,7 @@ impl Hai {
 #[wasm_bindgen]
 impl Hai {
     #[wasm_bindgen(js_name = "toString")]
-    pub fn to_string_js(&self) -> String {
+    pub fn to_string_js(self) -> String {
         self.to_string()
     }
 

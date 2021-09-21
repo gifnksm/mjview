@@ -19,7 +19,7 @@ impl HaiWithAttr {
         }
     }
 
-    pub(crate) fn to_prefix_str(&self) -> &str {
+    pub(crate) fn to_prefix_str(self) -> &'static str {
         match self {
             Self::FromTehai(_) => "",
             Self::FromTacha(tacha, _) => tacha.to_str(),

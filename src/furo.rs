@@ -62,7 +62,7 @@ impl Furo {
         self.to_vec().0.into_iter().map(|hai| *hai.hai())
     }
 
-    pub(crate) fn to_vec(&self) -> HaiVec {
+    pub(crate) fn to_vec(self) -> HaiVec {
         use HaiWithAttr::*;
         match self.0 {
             FuroKind::Chi {
@@ -101,7 +101,7 @@ impl Furo {
         }
     }
 
-    fn to_image(&self) -> Vec<HaiImage> {
+    fn to_image(self) -> Vec<HaiImage> {
         use HaiImage as H;
         match self.0 {
             FuroKind::Chi {
@@ -162,17 +162,17 @@ impl Furo {
 #[wasm_bindgen]
 impl Furo {
     #[wasm_bindgen(js_name = "toHaiArray")]
-    pub fn to_hai_array_js(&self) -> Box<[JsValue]> {
+    pub fn to_hai_array_js(self) -> Box<[JsValue]> {
         self.iter().map(JsValue::from).collect()
     }
 
     #[wasm_bindgen(js_name = "toString")]
-    pub fn to_string_js(&self) -> String {
+    pub fn to_string_js(self) -> String {
         self.to_string()
     }
 
     #[wasm_bindgen(js_name = "toImage")]
-    pub fn to_image_js(&self) -> Box<[JsValue]> {
+    pub fn to_image_js(self) -> Box<[JsValue]> {
         self.to_image().into_iter().map(JsValue::from).collect()
     }
 

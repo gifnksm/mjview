@@ -115,7 +115,7 @@ fn judge(agari: &Agari, env: &Env) -> (Rank, Vec<(&'static str, Rank)>) {
 
     // 役満
     if let Some((yakuman_count, mut yakuman_list)) =
-        judge_list(agari, env, &YAKUMAN_LIST, Rank::new_yakuman)
+        judge_list(agari, env, YAKUMAN_LIST, Rank::new_yakuman)
     {
         if !env.aotenjo {
             return (Rank::new_yakuman(yakuman_count), yakuman_list);
@@ -125,7 +125,7 @@ fn judge(agari: &Agari, env: &Env) -> (Rank, Vec<(&'static str, Rank)>) {
     }
 
     // 通常の役
-    if let Some((yaku_fan, mut yaku_list)) = judge_list(agari, env, &YAKU_LIST, Rank::new_fan) {
+    if let Some((yaku_fan, mut yaku_list)) = judge_list(agari, env, YAKU_LIST, Rank::new_fan) {
         total_fan += yaku_fan;
         list.append(&mut yaku_list);
     }
@@ -133,7 +133,7 @@ fn judge(agari: &Agari, env: &Env) -> (Rank, Vec<(&'static str, Rank)>) {
     // ドラ
     if !list.is_empty() {
         // 他の役がある場合のみカウント
-        if let Some((dora_fan, mut dora_list)) = judge_list(agari, env, &DORA_LIST, Rank::new_fan) {
+        if let Some((dora_fan, mut dora_list)) = judge_list(agari, env, DORA_LIST, Rank::new_fan) {
             total_fan += dora_fan;
             list.append(&mut dora_list);
         }
