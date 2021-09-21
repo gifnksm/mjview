@@ -14,9 +14,9 @@ module.exports = {
     filename: "[name].js",
   },
   devServer: {
-    contentBase: dist,
-    publicPath: "/mjview/",
-    openPage: "mjview/",
+    devMiddleware: {
+      publicPath: "/mjview",
+    },
   },
   experiments: {
     asyncWebAssembly: true,
