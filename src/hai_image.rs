@@ -76,7 +76,7 @@ impl HaiImage {
     pub fn to_string_js(self) -> String {
         match self.0 {
             HaiImageKind::Normal(hai) => hai.to_string(),
-            HaiImageKind::Sideways(hai) => format!("y_{}", hai.to_string()),
+            HaiImageKind::Sideways(hai) => format!("y_{}", hai),
             HaiImageKind::Hidden(_) => "_".into(),
             HaiImageKind::Stack { bottom, top } => {
                 format!("{{top:y_{}}}{{bottom:y_{}}}", top, bottom)
